@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${SMOKE_OUT:-$ROOT/_gen_smoke}"
 NAME="SmokeApp"
 NAME_OPTS="SmokeOpts"
+NAME_MUI="SmokeMui"
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
@@ -64,68 +65,57 @@ echo "==> Building CLI"
 cd "$ROOT"
 pnpm --filter create-next-style-guide build
 
-echo "==> Scaffold $NAME (defaults: endpoints+husky, no install)"
+echo "==> Scaffold $NAME (defaults: plain CSS + zod)"
 cd "$OUT"
 node "$ROOT/cli/dist/index.js" "$NAME" --yes --no-install
 
 APP="$OUT/$NAME"
 
 assert_file "$APP/package.json"
-assert_file "$APP/src/app/page.tsx"
-assert_file "$APP/src/app/_components/welcome-card/index.tsx"
-assert_file "$APP/src/lib/http.ts"
-assert_file "$APP/AGENTS.md"
-assert_file "$APP/.cursor/rules/core.mdc"
-assert_file "$APP/docs/style-guide/README.md"
+assert_grep '"next": "16.4.5"' "$APP/package.json"
+assert_grep "zod" "$APP/package.json"
+assert_file "$APP/.cursor/rules/validation.mdc"
+assert_grep "Zod" "$APP/.cursor/rules/validation.mdc"
+assert_file "$APP/src/lib/validations/.gitkeep"
+assert_missing "$APP/postcss.config.mjs"
+assert_missing "$APP/components.json"
+assert_missing "$APP/src/providers/mui-provider.tsx"
+assert_grep "Plain CSS" "$APP/src/app/_components/welcome-card/index.tsx"
+assert_grep "Validation: zod" "$APP/src/app/_components/welcome-card/index.tsx"
 
-assert_grep '"name": "smokeapp"' "$APP/package.json"
-assert_grep "SmokeApp" "$APP/src/app/page.tsx"
-assert_not_grep "__PROJECT_NAME__" "$APP/src/app/page.tsx"
-assert_not_grep "__PROJECT_SLUG__" "$APP/package.json"
-assert_not_grep "src/features/" "$APP/AGENTS.md"
-
-# defaults: endpoints + husky on; query/icons off
-assert_file "$APP/scripts/generate-endpoints.ts"
-assert_file "$APP/src/endpoints/Types.ts"
-assert_file "$APP/src/utils/axios-instance.ts"
-assert_file "$APP/.cursor/rules/endpoints.mdc"
-assert_file "$APP/docs/style-guide/http/endpoints.md"
-assert_grep "endpoints:generate" "$APP/package.json"
-assert_grep "axios" "$APP/package.json"
-
-assert_file "$APP/.husky/pre-commit"
-assert_file "$APP/.prettierrc"
-assert_file "$APP/docs/style-guide/tooling/husky.md"
-assert_grep '"prepare": "husky"' "$APP/package.json"
-
-assert_missing "$APP/src/providers/query-provider.tsx"
-assert_missing "$APP/.cursor/rules/icons.mdc"
-assert_missing "$APP/.cursor/rules/tanstack-query.mdc"
-assert_not_grep "@tanstack/react-query" "$APP/package.json"
-assert_grep "OpenAPI endpoints codegen" "$APP/src/app/_components/welcome-card/index.tsx"
-assert_grep "Husky + lint-staged" "$APP/src/app/_components/welcome-card/index.tsx"
-assert_grep "OpenAPI endpoints" "$APP/docs/style-guide/README.md"
-
-echo "==> Scaffold $NAME_OPTS (tabler + query; lean hooks off)"
+echo "==> Scaffold $NAME_OPTS (tailwind + shadcn + yup)"
 cd "$OUT"
 node "$ROOT/cli/dist/index.js" "$NAME_OPTS" --yes --no-install \
-  --icons tabler --tanstack-query --no-endpoints --no-husky
+  --styling tailwind --shadcn --validation yup --icons lucide \
+  --no-endpoints --no-eslint --no-prettier --no-husky --no-ci
 
 OPTS="$OUT/$NAME_OPTS"
 
-assert_file "$OPTS/src/providers/query-provider.tsx"
-assert_file "$OPTS/.cursor/rules/icons.mdc"
-assert_file "$OPTS/.cursor/rules/tanstack-query.mdc"
-assert_file "$OPTS/docs/style-guide/data/tanstack-query.md"
-assert_file "$OPTS/docs/style-guide/ui/icons.md"
-assert_grep "@tanstack/react-query" "$OPTS/package.json"
-assert_grep "@tabler/icons-react" "$OPTS/package.json"
-assert_grep "QueryProvider" "$OPTS/src/app/layout.tsx"
-assert_grep "TanStack Query" "$OPTS/docs/style-guide/README.md"
-assert_grep "Icons" "$OPTS/docs/style-guide/README.md"
-assert_missing "$OPTS/scripts/generate-endpoints.ts"
-assert_missing "$OPTS/.husky/pre-commit"
-assert_not_grep "OpenAPI endpoints" "$OPTS/docs/style-guide/README.md"
+assert_file "$OPTS/postcss.config.mjs"
+assert_file "$OPTS/components.json"
+assert_file "$OPTS/.cursor/rules/tailwind.mdc"
+assert_file "$OPTS/.cursor/rules/shadcn.mdc"
+assert_file "$OPTS/.cursor/rules/validation.mdc"
+assert_grep "yup" "$OPTS/package.json"
+assert_not_grep '"zod"' "$OPTS/package.json"
+assert_grep "from \"yup\"" "$OPTS/src/lib/env.ts"
+assert_grep "Yup" "$OPTS/.cursor/rules/forms.mdc"
+assert_grep "Tailwind + shadcn" "$OPTS/src/app/_components/welcome-card/index.tsx"
+
+echo "==> Scaffold $NAME_MUI (mui forces no shadcn)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "$NAME_MUI" --yes --no-install \
+  --styling mui --shadcn --validation zod \
+  --no-endpoints --no-eslint --no-prettier --no-husky --no-ci
+
+MUI="$OUT/$NAME_MUI"
+
+assert_file "$MUI/src/providers/mui-provider.tsx"
+assert_file "$MUI/.cursor/rules/mui.mdc"
+assert_grep "MuiProvider" "$MUI/src/app/layout.tsx"
+assert_missing "$MUI/components.json"
+assert_missing "$MUI/.cursor/rules/shadcn.mdc"
+assert_grep "MUI" "$MUI/src/app/_components/welcome-card/index.tsx"
 
 echo
 echo "Smoke results: $pass passed, $fail failed"

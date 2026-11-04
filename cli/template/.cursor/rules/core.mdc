@@ -1,17 +1,16 @@
 ---
-description: Core Next.js style-guide conventions
-globs: "src/**/*.{ts,tsx}"
+description: Core App Router + layer conventions (slim)
+globs: src/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
 # Core
 
-- App Router only (`src/app`). Route files stay thin.
-- Folder-per-component: `<name>/index.tsx` (never flat `_components/foo.tsx`).
-- Route-only UI → `src/app/<route>/_components/<name>/`.
-- Layout / homepage → `src/app/_components/<name>/`.
-- Shared (≥2 routes) → `src/components/` (`ui/` flat for shadcn CLI).
-- Infra in `src/lib/` (env, http, utils); API helpers in `src/utils/`.
-- Prefer Server Components; mark `"use client"` only for interactivity.
-- Validate public env with Zod in `src/lib/env.ts`.
-- Named exports for components; default exports only for Next route files.
+- App Router only. Routes orchestrate; keep `page`/`layout` thin.
+- Placement: route → `app/<route>/_components/<name>/`; home/layout → `app/_components/`; shared ≥2 routes → `components/` (`ui/` flat).
+- Folder-per-component: `<name>/index.tsx` — never `_components/foo.tsx`.
+- `lib/` = env/http/helpers; `utils/` = API client helpers; `providers/` / `hooks/` / `types/` as needed.
+- Server Components by default; `"use client"` only for interactivity.
+- Env: Zod in `src/lib/env.ts`. HTTP via `lib/http` or `utils/api` / `endpoints` — not scattershot `fetch`.
+- Named exports `function Name()`; default exports only for Next route files.
+- One `<main>` in root layout only.

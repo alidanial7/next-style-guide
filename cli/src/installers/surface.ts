@@ -6,7 +6,18 @@ import type { ScaffoldOptions } from "../types.js";
 import type { Installer } from "./types.js";
 
 function stackLines(options: ScaffoldOptions): string[] {
+  const stylingLabel =
+    options.styling === "tailwind"
+      ? options.ui === "shadcn"
+        ? "Tailwind + shadcn/ui"
+        : "Tailwind CSS"
+      : options.styling === "mui"
+        ? "MUI"
+        : "Plain CSS";
+
   return [
+    `Styling: ${stylingLabel}`,
+    `Validation: ${options.validation}`,
     options.data === "tanstack-query"
       ? "TanStack Query enabled"
       : "RSC / fetch (no TanStack Query)",
@@ -14,7 +25,11 @@ function stackLines(options: ScaffoldOptions): string[] {
     options.endpoints
       ? "OpenAPI endpoints codegen (`pnpm endpoints:generate`)"
       : "No endpoints codegen",
-    options.husky ? "Husky + lint-staged + Prettier" : "No git hooks",
+    options.eslint ? "Enhanced ESLint" : "Minimal ESLint",
+    options.prettier ? "Prettier" : "No Prettier",
+    options.husky ? "Husky + lint-staged" : "No git hooks",
+    options.docker ? "Docker standalone image" : "No Docker",
+    options.ci ? "GitHub Actions CI" : "No CI workflow",
   ];
 }
 
@@ -46,6 +61,9 @@ function escapeJsx(text: string): string {
 }
 
 function homePageSource(options: ScaffoldOptions): string {
+  const uiBit =
+    options.ui === "shadcn" ? " · ui=<code>shadcn</code>" : "";
+
   return `import { WelcomeCard } from "@/app/_components/welcome-card";
 
 export default function HomePage() {
@@ -54,10 +72,10 @@ export default function HomePage() {
       <section className="hero">
         <h1>${options.name}</h1>
         <p>
-          Scaffolded with <strong>next-style-guide</strong>. Choices: icons=
-          <code>${options.icons}</code>, data=<code>${options.data}</code>,
-          endpoints=<code>${options.endpoints ? "on" : "off"}</code>, husky=
-          <code>${options.husky ? "on" : "off"}</code>.
+          Scaffolded with <strong>next-style-guide</strong> (Next.js 16).
+          styling=<code>${options.styling}</code>${uiBit} · validation=
+          <code>${options.validation}</code> · icons=<code>${options.icons}</code> ·
+          data=<code>${options.data}</code>.
         </p>
       </section>
 
@@ -65,7 +83,7 @@ export default function HomePage() {
 
       <p className="meta">
         Read <code>AGENTS.md</code> and <code>docs/style-guide/</code> before
-        adding routes.
+        adding routes. Feature rules in <code>.cursor/rules/</code> load by glob.
       </p>
     </>
   );
@@ -81,8 +99,21 @@ function docsIndex(options: ScaffoldOptions): string {
     ],
     ["[Project structure](overview/project-structure.md)", "Folder map"],
     ["[HTTP client](http/client.md)", "`apiFetch` helper"],
+    [
+      `[Validation](validation/${options.validation}.md)`,
+      options.validation.toUpperCase(),
+    ],
   ];
 
+  if (options.styling === "tailwind") {
+    rows.push(["Tailwind", "See `.cursor/rules/tailwind.mdc`"]);
+  }
+  if (options.ui === "shadcn") {
+    rows.push(["shadcn/ui", "See `.cursor/rules/shadcn.mdc` + `components.json`"]);
+  }
+  if (options.styling === "mui") {
+    rows.push(["MUI", "See `.cursor/rules/mui.mdc`"]);
+  }
   if (options.endpoints) {
     rows.push([
       "[OpenAPI endpoints](http/endpoints.md)",
@@ -98,8 +129,20 @@ function docsIndex(options: ScaffoldOptions): string {
   if (options.icons !== "none") {
     rows.push(["[Icons](ui/icons.md)", `Icon library (${options.icons})`]);
   }
+  if (options.eslint) {
+    rows.push(["[ESLint](tooling/eslint.md)", "Import sort + style rules"]);
+  }
+  if (options.prettier) {
+    rows.push(["[Prettier](tooling/prettier.md)", "Formatting"]);
+  }
   if (options.husky) {
-    rows.push(["[Husky](tooling/husky.md)", "Pre-commit Prettier + ESLint"]);
+    rows.push(["[Husky](tooling/husky.md)", "Pre-commit hooks"]);
+  }
+  if (options.docker) {
+    rows.push(["[Docker](ops/docker.md)", "Standalone production image"]);
+  }
+  if (options.ci) {
+    rows.push(["[CI](ops/ci.md)", "GitHub Actions"]);
   }
 
   const table = [
@@ -114,14 +157,10 @@ Living conventions for this app. Open one page at a time.
 
 ${table}
 
-Coding agents: start at [\`AGENTS.md\`](../../AGENTS.md) → [\`.cursor/rules/\`](../../.cursor/rules/).
+Coding agents: start at [\`AGENTS.md\`](../../AGENTS.md) → [\`.cursor/rules/\`](../../.cursor/rules/) (glob-scoped).
 `;
 }
 
-/**
- * Rebuild choice-aware homepage + docs index (and copy feature doc pages).
- * Runs last so other installers' files already exist.
- */
 export const surfaceInstaller: Installer = {
   id: "surface",
   active: () => true,

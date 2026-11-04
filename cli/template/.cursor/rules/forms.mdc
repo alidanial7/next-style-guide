@@ -1,0 +1,16 @@
+---
+description: RHF + Zod forms aligned to API body types
+globs: src/**/*form*/**,src/**/*-form*/**,src/**/*.form.tsx,src/components/forms/**,src/lib/**/*form*.ts,src/lib/validations/**
+alwaysApply: false
+---
+
+# Forms
+
+- `"use client"` + named exports. `page.tsx` stays server when metadata-only.
+- Placement: shared → `src/components/forms/<name>/`; one route → `src/app/<route>/_components/forms/<name>/`.
+- RHF + `Controller` + Zod `zodResolver`. Schema `satisfies z.ZodType<*Body>` when endpoints codegen exists; field names = API keys.
+- Reuse `Field*` / `Input` / `Select` / shared controls — no ad-hoc inputs.
+- Required: derive from schema / `*Body`; use `required` on Field/Label (no handmade `*` / "(optional)" text).
+- Invalid: `data-invalid`, `aria-invalid`, `FieldError`.
+- Server 400 envelope: `getApiErrorMessage` / `extractApiFieldErrors` (`@/utils/api-error`); map to `setError` when using RHF.
+- Never duplicate the same form state/submit logic across pages.

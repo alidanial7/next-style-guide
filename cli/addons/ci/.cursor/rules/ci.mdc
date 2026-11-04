@@ -1,0 +1,11 @@
+---
+description: GitHub Actions CI workflow
+globs: .github/workflows/**
+alwaysApply: false
+---
+
+# CI
+
+- Workflow: `.github/workflows/ci.yml` — install → typecheck → lint/format (if enabled) → build.
+- Keep jobs green before merge. Don't skip checks with unrelated workflow edits.
+- New required scripts must be reflected in the workflow steps.

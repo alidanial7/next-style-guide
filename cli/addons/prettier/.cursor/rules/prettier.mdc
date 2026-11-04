@@ -1,0 +1,11 @@
+---
+description: Prettier formatting
+globs: .prettierrc,**/*.{ts,tsx,js,jsx,json,css,md,yml,yaml}
+alwaysApply: false
+---
+
+# Prettier
+
+- Config: `.prettierrc` (printWidth 100, double quotes, trailing commas).
+- Do not hand-fight formatting — run `pnpm format`.
+- With Husky: lint-staged runs Prettier before ESLint on commit.

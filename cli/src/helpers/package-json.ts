@@ -54,3 +54,17 @@ export async function mergePackageField(
   pkg[field] = value;
   await fs.writeJson(pkgPath, pkg, { spaces: 2 });
 }
+
+export async function removeDependencies(
+  projectDir: string,
+  names: string[],
+  kind: "dependencies" | "devDependencies" = "dependencies",
+): Promise<void> {
+  const { pkgPath, pkg } = await readPkg(projectDir);
+  if (!pkg[kind]) return;
+  for (const name of names) {
+    delete pkg[kind]![name];
+  }
+  pkg[kind] = sortRecord(pkg[kind]!);
+  await fs.writeJson(pkgPath, pkg, { spaces: 2 });
+}

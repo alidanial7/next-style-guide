@@ -12,7 +12,7 @@
 <p align="center">
   <a href="VERSION"><img src="https://img.shields.io/badge/template-0.1.0-000000?style=for-the-badge" alt="Version" /></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node-%3E%3D20-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node" /></a>
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" /></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge" alt="License" /></a>
 </p>
 
@@ -26,7 +26,7 @@
 
 Frontend twin of [django-style-guide](https://github.com/alidanial7/django-style-guide): a **create-t3-app–style CLI** that scaffolds a lean Next.js app with conventions, agent rules, and docs baked in.
 
-> 🚧 **In progress** — icons · TanStack Query · OpenAPI endpoints · Husky prompts work today. Auth / shadcn / i18n next.
+> 🚧 **In progress** — styling (Tailwind/MUI) · shadcn · Zod/Yup · icons · Query · endpoints · tooling · Docker · CI. Auth / i18n next.
 
 ---
 
@@ -95,20 +95,20 @@ my-app/
 
 | | Flag | Status |
 |:---:|:---|:---|
-| ✨ | Icons (`none` / `lucide` / `tabler`) | prompted + installer |
-| 📡 | TanStack Query | prompted + installer |
-| 🔌 | OpenAPI endpoints codegen | prompted + installer (default on) |
-| 🐶 | Husky + lint-staged + Prettier | prompted + installer (default on) |
-| 🔑 | Auth (`none` / `django-jwt` / `authjs`) | stubbed in types |
-| 🎨 | UI (`none` / `shadcn`) | stubbed |
-| 🌍 | i18n | stubbed |
-| 🔗 | Django envelope client | default on (installer TBD) |
-| 🧪 | Vitest + Playwright | stubbed |
-| 🤖 | GitHub Actions CI | stubbed |
+| 🎨 | Styling (`none` / `tailwind` / `mui`) | prompted |
+| 🧩 | shadcn/ui | prompted only if Tailwind (ignored for MUI) |
+| ✅ | Validation (`zod` / `yup`) | prompted · env + forms rules |
+| ✨ | Icons (`none` / `lucide` / `tabler`) | prompted |
+| 📡 | TanStack Query | prompted |
+| 🔌 | OpenAPI endpoints codegen | prompted (default on) |
+| 🧹 | Enhanced ESLint | prompted (default on) |
+| ✨ | Prettier | prompted (default on) |
+| 🐶 | Husky + lint-staged | prompted (default on) |
+| 🐳 | Docker standalone image | prompted (default off) |
+| 🤖 | GitHub Actions CI | prompted (default on) |
+| 🔑 | Auth / i18n / testing | stubbed |
 
-Choice-aware output: homepage + `docs/style-guide/` index/pages match the selected options.
-
-CLI flags: `--icons …`, `--tanstack-query` / `--no-tanstack-query`, `--endpoints` / `--no-endpoints`, `--husky` / `--no-husky`.
+CLI: `--styling`, `--shadcn`, `--validation`, `--icons`, … (+ `--no-*`).
 
 ---
 

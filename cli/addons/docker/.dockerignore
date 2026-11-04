@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.cursor
+.env*
+!.env.example
+*.tsbuildinfo
+coverage
+out
+README.md
+AGENTS.md
+_gen_smoke

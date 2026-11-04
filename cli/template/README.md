@@ -11,7 +11,7 @@ Next.js App Router app generated with [next-style-guide](https://github.com/alid
 
 ## Stack
 
-- Next.js 15 · React 19 · TypeScript
+- Next.js 16 · React 19 · TypeScript
 - Zod env validation
 - App Router under `src/app/`
 - Route-colocated UI under `_components/` (folder-per-component)

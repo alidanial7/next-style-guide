@@ -5,8 +5,11 @@ import { TITLE } from "./constants.js";
 import { slugify } from "./helpers/slugify.js";
 import {
   DEFAULT_OPTIONS,
+  normalizeUiOptions,
   type IconOption,
   type ScaffoldOptions,
+  type StylingOption,
+  type ValidationOption,
 } from "./types.js";
 
 function assertNotCancel<T>(value: T | symbol): T {
@@ -41,6 +44,41 @@ export async function runPrompts(
 
   const slug = slugify(name);
 
+  const styling = assertNotCancel(
+    await p.select({
+      message: "Styling system?",
+      options: [
+        {
+          value: "none" satisfies StylingOption,
+          label: "None",
+          hint: "plain CSS (base template)",
+        },
+        {
+          value: "tailwind" satisfies StylingOption,
+          label: "Tailwind CSS",
+          hint: "utilities · enables optional shadcn",
+        },
+        {
+          value: "mui" satisfies StylingOption,
+          label: "MUI",
+          hint: "Material UI — no shadcn",
+        },
+      ],
+      initialValue: DEFAULT_OPTIONS.styling,
+    }),
+  );
+
+  let ui: ScaffoldOptions["ui"] = "none";
+  if (styling === "tailwind") {
+    const useShadcn = assertNotCancel(
+      await p.confirm({
+        message: "Add shadcn/ui?",
+        initialValue: false,
+      }),
+    );
+    ui = useShadcn ? "shadcn" : "none";
+  }
+
   const icons = assertNotCancel(
     await p.select({
       message: "Icon library?",
@@ -48,12 +86,12 @@ export async function runPrompts(
         {
           value: "none" satisfies IconOption,
           label: "None",
-          hint: "add later",
+          hint: ui === "shadcn" ? "shadcn will still add lucide" : "add later",
         },
         {
           value: "lucide" satisfies IconOption,
           label: "Lucide",
-          hint: "lucide-react — common with shadcn",
+          hint: "common with shadcn",
         },
         {
           value: "tabler" satisfies IconOption,
@@ -62,6 +100,25 @@ export async function runPrompts(
         },
       ],
       initialValue: DEFAULT_OPTIONS.icons,
+    }),
+  );
+
+  const validation = assertNotCancel(
+    await p.select({
+      message: "Validation library?",
+      options: [
+        {
+          value: "zod" satisfies ValidationOption,
+          label: "Zod",
+          hint: "default · typed schemas",
+        },
+        {
+          value: "yup" satisfies ValidationOption,
+          label: "Yup",
+          hint: "schema builder · InferType",
+        },
+      ],
+      initialValue: DEFAULT_OPTIONS.validation,
     }),
   );
 
@@ -79,10 +136,38 @@ export async function runPrompts(
     }),
   );
 
+  const eslint = assertNotCancel(
+    await p.confirm({
+      message: "Enhanced ESLint (import sort, func-style, jsx-sort-props)?",
+      initialValue: DEFAULT_OPTIONS.eslint,
+    }),
+  );
+
+  const prettier = assertNotCancel(
+    await p.confirm({
+      message: "Add Prettier?",
+      initialValue: DEFAULT_OPTIONS.prettier,
+    }),
+  );
+
   const husky = assertNotCancel(
     await p.confirm({
       message: "Add Husky + lint-staged (pre-commit)?",
       initialValue: DEFAULT_OPTIONS.husky,
+    }),
+  );
+
+  const docker = assertNotCancel(
+    await p.confirm({
+      message: "Add Docker production image (standalone Next)?",
+      initialValue: DEFAULT_OPTIONS.docker,
+    }),
+  );
+
+  const ci = assertNotCancel(
+    await p.confirm({
+      message: "Add GitHub Actions CI?",
+      initialValue: DEFAULT_OPTIONS.ci,
     }),
   );
 
@@ -98,13 +183,20 @@ export async function runPrompts(
     process.exit(0);
   }
 
-  return {
+  return normalizeUiOptions({
     name: name.trim(),
     slug,
     ...DEFAULT_OPTIONS,
+    styling,
+    ui,
     icons,
-    data: useTanstackQuery ? "tanstack-query" : "rsc",
+    validation,
+    data: useTanstackQuery ? ("tanstack-query" as const) : ("rsc" as const),
     endpoints,
+    eslint,
+    prettier,
     husky,
-  };
+    docker,
+    ci,
+  });
 }

@@ -34,15 +34,17 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 
 const RULE = `---
 description: TanStack Query conventions
-globs: "src/**/*.{ts,tsx}"
+globs: src/providers/**,src/hooks/**,src/endpoints/**,src/**/*query*.{ts,tsx},src/**/use-*.{ts,tsx}
 alwaysApply: false
 ---
 
 # TanStack Query
 
-- Wrap the app with \`QueryProvider\` from \`src/providers/query-provider.tsx\` (already in root layout).
-- Prefer \`useQuery\` / \`useMutation\` for client data; keep Server Components for RSC-friendly fetches.
-- Avoid ad-hoc string query keys — centralize keys next to the fetch helper when you add endpoints.
+- \`QueryProvider\` wraps root layout (\`src/providers/query-provider.tsx\`).
+- Client data: \`useQuery\` / \`useMutation\`; keep RSC for server-friendly fetches.
+- Query keys: use generated \`get<EndpointName>QueryKey(...)\` when endpoints codegen is on — never ad-hoc \`["resource"]\` strings.
+- Default hook \`params\` to the matching \`*DefaultParams\` when present.
+- Errors: \`getApiErrorMessage\` / field helpers from \`@/utils/api-error\`.
 `;
 
 export const tanstackQueryInstaller: Installer = {

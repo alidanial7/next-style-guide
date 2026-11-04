@@ -1,0 +1,12 @@
+---
+description: Docker / standalone Next production image
+globs: docker/**,.dockerignore,next.config.ts,Dockerfile*
+alwaysApply: false
+---
+
+# Docker
+
+- Image: `docker/production.Dockerfile` (multi-stage, Next `output: "standalone"`).
+- Build args: `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_URL` (inlined at build).
+- `HUSKY=0` in builder. Healthcheck hits `/` on port 3000.
+- Changing env/build args/ports → call out infra/deploy follow-ups in the final response.
