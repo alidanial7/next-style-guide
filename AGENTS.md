@@ -9,6 +9,7 @@ This repo is a CLI that scaffolds Next.js apps. Generated app code lives under `
 - Prune unused files when a feature flag is off.
 - Keep generated agent surface slim: `AGENTS.md` + `.cursor/rules/*.mdc` (feature rules only when the option is on).
 - Run `pnpm smoke` after scaffold / installer changes.
+- After an npm publish / version tag (`vX.Y.Z`): `VERSION`, root `package.json`, and `cli/package.json` must match that semver (publish workflow commits this back to `main`; if publishing outside CI, sync + commit them yourself). Leave `cli/template/package.json` alone (app seed version).
 
 ## Don't
 

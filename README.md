@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="VERSION"><img src="https://img.shields.io/badge/template-0.1.0-000000?style=for-the-badge" alt="Version" /></a>
+  <a href="https://www.npmjs.com/package/create-next-style-guide"><img src="https://img.shields.io/npm/v/create-next-style-guide?style=for-the-badge&label=npm&color=CB3837" alt="npm" /></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node-%3E%3D20-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node" /></a>
   <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge" alt="License" /></a>
@@ -18,7 +18,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/pnpm-workspace-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm" />
-  <img src="https://img.shields.io/badge/CLI-create--next--style--guide-111827?style=flat-square" alt="CLI" />
+  <a href="https://www.npmjs.com/package/create-next-style-guide"><img src="https://img.shields.io/badge/CLI-create--next--style--guide-111827?style=flat-square" alt="CLI" /></a>
 </p>
 
 ---
@@ -42,34 +42,18 @@ Opinionated **Next.js** scaffold CLI: lean App Router layout, feature installers
 
 ## 🚀 Quick start
 
-### From this repo (dev)
-
-```bash
-pnpm install
-pnpm --filter create-next-style-guide build
-node cli/dist/index.js my-app
-```
-
-Or without building:
-
-```bash
-pnpm install
-pnpm --filter create-next-style-guide dev
-```
-
-### After publish (planned)
-
 ```bash
 pnpm create next-style-guide
 # or
 npx create-next-style-guide@latest
 ```
 
-### Non-interactive
+Interactive prompts, or skip with a preset:
 
 ```bash
-node cli/dist/index.js SmokeApp --yes --no-install
-node cli/dist/index.js ApiApp --yes --preset api-app --no-install
+npx create-next-style-guide@latest my-app --yes --preset api-app
+npx create-next-style-guide@latest shop --yes --preset marketing
+npx create-next-style-guide@latest admin --yes --preset dashboard
 ```
 
 ### Presets
@@ -103,7 +87,7 @@ my-app/
 
 | | Choice |
 |:---:|:---|
-| 🎛️ | Preset: `minimal` / `api-app` / `marketing` / `custom` |
+| 🎛️ | Preset: `minimal` / `api-app` / `marketing` / `dashboard` / `custom` |
 | 📦 | Package manager: `pnpm` / `npm` / `yarn` |
 | 🎨 | Styling: `none` / `tailwind` / `mui` |
 | 🧩 | shadcn (Tailwind only): `minimal` (button) / `starter` (button · input · card · dialog) |
@@ -160,27 +144,39 @@ pnpm typecheck
 pnpm smoke          # uses rg if available, else grep
 ```
 
+Local CLI without publishing:
+
+```bash
+pnpm --filter create-next-style-guide build
+node cli/dist/index.js my-app --yes --no-install
+# or
+pnpm --filter create-next-style-guide dev
+```
+
 See [`AGENTS.md`](AGENTS.md).
 
 ---
 
 ## 🚢 Release (npm via GitHub Actions)
 
-Pushing a version tag publishes `create-next-style-guide` to npm.
+Latest on npm: [`create-next-style-guide`](https://www.npmjs.com/package/create-next-style-guide) — version tracked in [`VERSION`](VERSION).
+
+Pushing a version tag publishes the package.
 
 1. **Secret once:** GitHub repo → Settings → Secrets and variables → Actions → `NPM_TOKEN`  
    Create a [granular npm token](https://www.npmjs.com/settings/~/tokens) with **Read and write** + **Bypass 2FA** for publish.
 2. Commit your changes on `main`.
-3. Tag and push (example `0.1.1`):
+3. Tag and push (semver after current `VERSION`):
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+# example: VERSION is 0.1.4 → next tag
+git tag v0.1.5
+git push origin v0.1.5
 ```
 
-Workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) runs typecheck + smoke, syncs `cli/package.json` / `VERSION` from the tag, then `npm publish --access public`.
+Workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) runs typecheck + smoke, publishes, then commits `VERSION` + root/`cli` `package.json` back to `main`.
 
-Tag format: `v` + semver (`v0.1.1`, `v1.0.0-beta.1`, …).
+Tag format: `v` + semver (`v0.1.5`, `v1.0.0-beta.1`, …).
 
 ---
 
