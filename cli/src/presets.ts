@@ -15,6 +15,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     auth: "none",
     styling: "none",
     ui: "none",
+    shadcnSet: "minimal",
     data: "rsc",
     store: "none",
     icons: "none",
@@ -27,7 +28,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     eslint: false,
     prettier: false,
     husky: false,
-    docker: false,
+    deploy: "none",
     ci: false,
     testing: false,
     playwright: false,
@@ -37,6 +38,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     auth: "jwt",
     styling: "tailwind",
     ui: "shadcn",
+    shadcnSet: "starter",
     data: "tanstack-query",
     store: "zustand",
     icons: "lucide",
@@ -49,7 +51,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     eslint: true,
     prettier: true,
     husky: true,
-    docker: false,
+    deploy: "none",
     ci: true,
     testing: true,
     playwright: false,
@@ -59,6 +61,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     auth: "none",
     styling: "tailwind",
     ui: "shadcn",
+    shadcnSet: "minimal",
     data: "rsc",
     store: "none",
     icons: "lucide",
@@ -71,7 +74,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     eslint: true,
     prettier: true,
     husky: true,
-    docker: false,
+    deploy: "vercel",
     ci: true,
     testing: true,
     playwright: false,
@@ -81,6 +84,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     auth: "none",
     styling: "tailwind",
     ui: "shadcn",
+    shadcnSet: "starter",
     data: "tanstack-query",
     store: "zustand",
     icons: "lucide",
@@ -93,7 +97,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     eslint: true,
     prettier: true,
     husky: true,
-    docker: false,
+    deploy: "none",
     ci: true,
     testing: true,
     playwright: false,
@@ -104,13 +108,14 @@ export function describePreset(id: Exclude<PresetId, "custom">): string {
   const seed = PRESET_SEEDS[id];
   return [
     `styling=${seed.styling}`,
-    seed.ui === "shadcn" ? "shadcn" : null,
+    seed.ui === "shadcn" ? `shadcn:${seed.shadcnSet}` : null,
     `auth=${seed.auth}`,
     seed.store !== "none" ? `store=${seed.store}` : null,
     `validation=${seed.validation}`,
     seed.endpoints ? "endpoints" : null,
     seed.data === "tanstack-query" ? "query" : null,
     seed.darkMode ? "dark" : null,
+    seed.deploy !== "none" ? `deploy=${seed.deploy}` : null,
     seed.seo ? "seo" : null,
     seed.i18n ? "i18n" : null,
     seed.testing ? "vitest" : null,
@@ -119,8 +124,16 @@ export function describePreset(id: Exclude<PresetId, "custom">): string {
     .join(" · ");
 }
 
+type WarningOpts = {
+  /** Include advisory tips (Query vs store, etc.). Default: false. */
+  verbose?: boolean;
+};
+
 /** Soft warnings for odd but allowed combinations. */
-export function collectOptionWarnings(options: ScaffoldOptions): string[] {
+export function collectOptionWarnings(
+  options: ScaffoldOptions,
+  { verbose = false }: WarningOpts = {},
+): string[] {
   const warnings: string[] = [];
 
   if (options.auth === "jwt" && !options.endpoints) {
@@ -142,9 +155,13 @@ export function collectOptionWarnings(options: ScaffoldOptions): string[] {
   if (options.playwright && !options.testing) {
     warnings.push("Playwright was requested without Vitest — enabling testing.");
   }
-  if (options.store !== "none" && options.data === "tanstack-query") {
+  if (
+    verbose &&
+    options.store !== "none" &&
+    options.data === "tanstack-query"
+  ) {
     warnings.push(
-      "Client store + TanStack Query: use Query for server cache; store for UI/session client state only.",
+      "Tip: Query = server cache; store = UI/session only. See docs/style-guide/overview/architecture.md",
     );
   }
 

@@ -13,9 +13,11 @@ import {
   DEFAULT_OPTIONS,
   normalizeOptions,
   type AuthOption,
+  type DeployOption,
   type IconOption,
   type PackageManager,
   type ScaffoldOptions,
+  type ShadcnSetOption,
   type StoreOption,
   type StylingOption,
   type ValidationOption,
@@ -53,6 +55,7 @@ async function promptCustomOptions(
   );
 
   let ui: ScaffoldOptions["ui"] = "none";
+  let shadcnSet: ShadcnSetOption = "minimal";
   let darkMode = false;
   if (styling === "tailwind") {
     const useShadcn = assertNotCancel(
@@ -62,6 +65,26 @@ async function promptCustomOptions(
       }),
     );
     ui = useShadcn ? "shadcn" : "none";
+    if (useShadcn) {
+      shadcnSet = assertNotCancel(
+        await p.select({
+          message: "shadcn component set?",
+          options: [
+            {
+              value: "minimal" satisfies ShadcnSetOption,
+              label: "Minimal",
+              hint: "Button only",
+            },
+            {
+              value: "starter" satisfies ShadcnSetOption,
+              label: "Starter",
+              hint: "Button · Input · Card · Dialog",
+            },
+          ],
+          initialValue: base.shadcnSet,
+        }),
+      );
+    }
     darkMode = assertNotCancel(
       await p.confirm({
         message: "Add dark mode (next-themes)?",
@@ -225,10 +248,27 @@ async function promptCustomOptions(
     }),
   );
 
-  const docker = assertNotCancel(
-    await p.confirm({
-      message: "Add Docker production image?",
-      initialValue: base.docker,
+  const deploy = assertNotCancel(
+    await p.select({
+      message: "Deployment target?",
+      options: [
+        {
+          value: "none" satisfies DeployOption,
+          label: "None",
+          hint: "no deploy files",
+        },
+        {
+          value: "vercel" satisfies DeployOption,
+          label: "Vercel",
+          hint: "vercel.json + docs",
+        },
+        {
+          value: "docker" satisfies DeployOption,
+          label: "Docker",
+          hint: "standalone production image",
+        },
+      ],
+      initialValue: base.deploy,
     }),
   );
 
@@ -243,6 +283,7 @@ async function promptCustomOptions(
     ...base,
     styling,
     ui,
+    shadcnSet,
     darkMode,
     icons,
     validation,
@@ -258,7 +299,7 @@ async function promptCustomOptions(
     eslint,
     prettier,
     husky,
-    docker,
+    deploy,
     ci,
   };
 }

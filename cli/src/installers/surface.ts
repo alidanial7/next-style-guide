@@ -42,9 +42,16 @@ function stackLines(options: ScaffoldOptions): string[] {
     options.eslint ? "Enhanced ESLint" : "Minimal ESLint",
     options.prettier ? "Prettier" : "No Prettier",
     options.husky ? "Husky + lint-staged" : "No git hooks",
-    options.docker ? "Docker standalone image" : "No Docker",
+    options.ui === "shadcn"
+      ? `shadcn set: ${options.shadcnSet}`
+      : null,
+    options.deploy === "docker"
+      ? "Deploy: Docker standalone image"
+      : options.deploy === "vercel"
+        ? "Deploy: Vercel"
+        : "No deploy target",
     options.ci ? "GitHub Actions CI" : "No CI workflow",
-  ];
+  ].filter((line): line is string => line !== null);
 }
 
 function welcomeCardSource(options: ScaffoldOptions): string {
@@ -112,6 +119,7 @@ function docsIndex(options: ScaffoldOptions): string {
       "Layers: app / components / lib / utils",
     ],
     ["[Project structure](overview/project-structure.md)", "Folder map"],
+    ["[Environment](ops/env.md)", "`.env.example` · staging · production"],
     ["[HTTP client](http/client.md)", "`apiFetch` helper"],
     [
       `[Validation](validation/${options.validation}.md)`,
@@ -156,7 +164,10 @@ function docsIndex(options: ScaffoldOptions): string {
     rows.push(["Tailwind", "See `.cursor/rules/tailwind.mdc`"]);
   }
   if (options.ui === "shadcn") {
-    rows.push(["shadcn/ui", "See `.cursor/rules/shadcn.mdc` + `components.json`"]);
+    rows.push([
+      "[shadcn/ui](ui/shadcn.md)",
+      `set=${options.shadcnSet}`,
+    ]);
   }
   if (options.styling === "mui") {
     rows.push(["MUI", "See `.cursor/rules/mui.mdc`"]);
@@ -185,8 +196,11 @@ function docsIndex(options: ScaffoldOptions): string {
   if (options.husky) {
     rows.push(["[Husky](tooling/husky.md)", "Pre-commit hooks"]);
   }
-  if (options.docker) {
+  if (options.deploy === "docker") {
     rows.push(["[Docker](ops/docker.md)", "Standalone production image"]);
+  }
+  if (options.deploy === "vercel") {
+    rows.push(["[Vercel](ops/vercel.md)", "vercel.json + env notes"]);
   }
   if (options.ci) {
     rows.push(["[CI](ops/ci.md)", "GitHub Actions"]);

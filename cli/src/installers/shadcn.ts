@@ -71,7 +71,160 @@ export function Button({
 }
 `;
 
-const RULE = `---
+const INPUT = `import type { ComponentProps } from "react";
+
+import { cn } from "@/lib/utils";
+
+export function Input({ className, type, ...props }: ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      className={cn(
+        "flex h-9 w-full rounded-md border border-neutral-300 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+`;
+
+const CARD = `import type { ComponentProps } from "react";
+
+import { cn } from "@/lib/utils";
+
+export function Card({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-neutral-200 bg-white text-neutral-950 shadow-sm",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function CardHeader({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div className={cn("flex flex-col gap-1.5 p-6", className)} {...props} />
+  );
+}
+
+export function CardTitle({ className, ...props }: ComponentProps<"h3">) {
+  return (
+    <h3
+      className={cn("font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
+  );
+}
+
+export function CardDescription({ className, ...props }: ComponentProps<"p">) {
+  return (
+    <p className={cn("text-sm text-neutral-500", className)} {...props} />
+  );
+}
+
+export function CardContent({ className, ...props }: ComponentProps<"div">) {
+  return <div className={cn("p-6 pt-0", className)} {...props} />;
+}
+
+export function CardFooter({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div className={cn("flex items-center p-6 pt-0", className)} {...props} />
+  );
+}
+`;
+
+const DIALOG = `"use client";
+
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import type { ComponentProps } from "react";
+
+import { cn } from "@/lib/utils";
+
+export const Dialog = DialogPrimitive.Root;
+export const DialogTrigger = DialogPrimitive.Trigger;
+export const DialogClose = DialogPrimitive.Close;
+export const DialogPortal = DialogPrimitive.Portal;
+
+export function DialogOverlay({
+  className,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Overlay>) {
+  return (
+    <DialogPrimitive.Overlay
+      className={cn(
+        "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function DialogContent({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Content>) {
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        className={cn(
+          "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-neutral-200 bg-white p-6 shadow-lg duration-200 sm:rounded-xl",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+}
+
+export function DialogHeader({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      className={cn("flex flex-col gap-1.5 text-center sm:text-left", className)}
+      {...props}
+    />
+  );
+}
+
+export function DialogTitle({
+  className,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      className={cn("text-lg font-semibold leading-none", className)}
+      {...props}
+    />
+  );
+}
+
+export function DialogDescription({
+  className,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      className={cn("text-sm text-neutral-500", className)}
+      {...props}
+    />
+  );
+}
+`;
+
+function ruleFor(set: "minimal" | "starter"): string {
+  const setLine =
+    set === "starter"
+      ? "- Starter set: `button`, `input`, `card`, `dialog`."
+      : "- Minimal set: `button` only.";
+  return `---
 description: shadcn/ui conventions
 globs: components.json,src/components/ui/**,src/lib/utils.ts
 alwaysApply: false
@@ -80,35 +233,51 @@ alwaysApply: false
 # shadcn
 
 - Primitives live flat in \`src/components/ui/*\` (CLI-compatible).
-- Starter \`Button\` is included — add more with \`npx shadcn@latest add …\`.
+${setLine}
+- Add more with \`npx shadcn@latest add …\`.
 - \`cn()\` from \`@/lib/utils\` for class merging.
 - Config: \`components.json\`. Requires Tailwind.
 `;
+}
 
 export const shadcnInstaller: Installer = {
   id: "shadcn",
   active: (o) => o.ui === "shadcn" && o.styling === "tailwind",
   async run({ projectDir, options }) {
     const iconLibrary = options.icons === "tabler" ? "tabler" : "lucide";
+    const set = options.shadcnSet;
+    const uiDir = path.join(projectDir, "src", "components", "ui");
 
     await fs.writeFile(
       path.join(projectDir, "components.json"),
       componentsJson(iconLibrary),
       "utf8",
     );
-    await fs.ensureDir(path.join(projectDir, "src", "components", "ui"));
-    await fs.writeFile(
-      path.join(projectDir, "src", "components", "ui", "button.tsx"),
-      BUTTON,
-      "utf8",
-    );
-    await fs.remove(path.join(projectDir, "src", "components", "ui", ".gitkeep"));
+    await fs.ensureDir(uiDir);
+    await fs.writeFile(path.join(uiDir, "button.tsx"), BUTTON, "utf8");
+
+    if (set === "starter") {
+      await fs.writeFile(path.join(uiDir, "input.tsx"), INPUT, "utf8");
+      await fs.writeFile(path.join(uiDir, "card.tsx"), CARD, "utf8");
+      await fs.writeFile(path.join(uiDir, "dialog.tsx"), DIALOG, "utf8");
+    }
+
+    await fs.remove(path.join(uiDir, ".gitkeep"));
     await fs.remove(path.join(projectDir, "src", "components", ".gitkeep"));
 
     await fs.writeFile(
       path.join(projectDir, ".cursor", "rules", "shadcn.mdc"),
-      RULE,
+      ruleFor(set),
       "utf8",
+    );
+    await fs.outputFile(
+      path.join(projectDir, "docs", "style-guide", "ui", "shadcn.md"),
+      `# shadcn/ui
+
+Set: **${set}**
+${set === "starter" ? "- `button` · `input` · `card` · `dialog`\n" : "- `button`\n"}
+Add more: \`npx shadcn@latest add …\`
+`,
     );
 
     if (options.icons === "none") {
@@ -117,8 +286,12 @@ export const shadcnInstaller: Installer = {
       });
     }
 
-    await addDependencies(projectDir, {
+    const deps: Record<string, string> = {
       "class-variance-authority": "^0.7.1",
-    });
+    };
+    if (set === "starter") {
+      deps["@radix-ui/react-dialog"] = "^1.1.4";
+    }
+    await addDependencies(projectDir, deps);
   },
 };

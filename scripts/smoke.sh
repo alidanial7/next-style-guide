@@ -92,6 +92,10 @@ APP="$OUT/$NAME"
 assert_file "$APP/package.json"
 assert_file "$APP/.gitignore"
 assert_missing "$APP/gitignore"
+assert_file "$APP/.env.example"
+assert_file "$APP/.env.staging.example"
+assert_file "$APP/.env.production.example"
+assert_file "$APP/docs/style-guide/ops/env.md"
 assert_grep '"next": "16.4.5"' "$APP/package.json"
 assert_grep "zod" "$APP/package.json"
 assert_grep '"packageManager": "pnpm@9.15.0"' "$APP/package.json"
@@ -120,12 +124,54 @@ OPTS="$OUT/$NAME_OPTS"
 
 assert_file "$OPTS/components.json"
 assert_file "$OPTS/src/components/ui/button.tsx"
+assert_missing "$OPTS/src/components/ui/input.tsx"
+assert_missing "$OPTS/src/components/ui/card.tsx"
+assert_missing "$OPTS/src/components/ui/dialog.tsx"
 assert_grep "yup" "$OPTS/package.json"
 assert_not_grep '"zod"' "$OPTS/package.json"
 assert_not_grep '"packageManager"' "$OPTS/package.json"
 assert_grep "Package manager: npm" "$OPTS/src/app/_components/welcome-card/index.tsx"
+assert_grep "No deploy target" "$OPTS/src/app/_components/welcome-card/index.tsx"
 assert_missing "$OPTS/vitest.config.mts"
 assert_missing "$OPTS/.cursor/rules/api-envelope.mdc"
+assert_missing "$OPTS/vercel.json"
+assert_missing "$OPTS/docker/production.Dockerfile"
+
+echo "==> Scaffold SmokeStarter (shadcn starter + vercel)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeStarter" --yes --no-install \
+  --styling tailwind --shadcn-set starter --deploy vercel \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+
+STARTER="$OUT/SmokeStarter"
+
+assert_file "$STARTER/src/components/ui/button.tsx"
+assert_file "$STARTER/src/components/ui/input.tsx"
+assert_file "$STARTER/src/components/ui/card.tsx"
+assert_file "$STARTER/src/components/ui/dialog.tsx"
+assert_file "$STARTER/vercel.json"
+assert_file "$STARTER/docs/style-guide/ops/vercel.md"
+assert_file "$STARTER/.cursor/rules/vercel.mdc"
+assert_grep "@radix-ui/react-dialog" "$STARTER/package.json"
+assert_grep "shadcn set: starter" "$STARTER/src/app/_components/welcome-card/index.tsx"
+assert_grep "Deploy: Vercel" "$STARTER/src/app/_components/welcome-card/index.tsx"
+assert_missing "$STARTER/docker/production.Dockerfile"
+
+echo "==> Scaffold SmokeDocker (--deploy docker)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeDocker" --yes --no-install \
+  --deploy docker \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+
+DOCKER="$OUT/SmokeDocker"
+
+assert_file "$DOCKER/docker/production.Dockerfile"
+assert_file "$DOCKER/.dockerignore"
+assert_file "$DOCKER/docs/style-guide/ops/docker.md"
+assert_grep "Deploy: Docker" "$DOCKER/src/app/_components/welcome-card/index.tsx"
+assert_missing "$DOCKER/vercel.json"
 
 echo "==> Scaffold $NAME_MUI (mui forces no shadcn)"
 cd "$OUT"
@@ -238,8 +284,23 @@ assert_file "$DASH/src/providers/app-providers.tsx"
 assert_grep "ThemeProvider" "$DASH/src/providers/app-providers.tsx"
 assert_grep "QueryProvider" "$DASH/src/providers/app-providers.tsx"
 assert_file "$DASH/src/stores/app-store.ts"
+assert_file "$DASH/src/components/ui/dialog.tsx"
 assert_grep "Dark mode" "$DASH/src/app/_components/welcome-card/index.tsx"
+assert_grep "shadcn set: starter" "$DASH/src/app/_components/welcome-card/index.tsx"
 assert_not_grep "axios" "$DASH/package.json"
+
+echo "==> Scaffold marketing (vercel deploy)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeMkt" --yes --no-install --preset marketing \
+  --no-husky --no-testing --no-eslint --no-prettier --no-ci
+
+MKT="$OUT/SmokeMkt"
+
+assert_file "$MKT/vercel.json"
+assert_file "$MKT/src/components/ui/button.tsx"
+assert_missing "$MKT/src/components/ui/dialog.tsx"
+assert_grep "Deploy: Vercel" "$MKT/src/app/_components/welcome-card/index.tsx"
+assert_grep "shadcn set: minimal" "$MKT/src/app/_components/welcome-card/index.tsx"
 
 echo "==> Scaffold $NAME_MIN (--preset minimal)"
 cd "$OUT"
@@ -319,6 +380,9 @@ node "$ROOT/cli/dist/index.js" "SmokeApi" --yes --preset api-app \
 assert_file "$OUT/SmokeApi/docker-compose.yml"
 assert_file "$OUT/SmokeApi/docs/examples/api-app-crud.md"
 assert_file "$OUT/SmokeApi/src/providers/app-providers.tsx"
+assert_file "$OUT/SmokeApi/src/components/ui/dialog.tsx"
+assert_missing "$OUT/SmokeApi/vercel.json"
+assert_missing "$OUT/SmokeApi/docker/production.Dockerfile"
 run_build "$OUT/SmokeApi" "pnpm build (api-app)" "pnpm build"
 
 echo

@@ -17,9 +17,11 @@ import {
   DEFAULT_OPTIONS,
   normalizeOptions,
   type AuthOption,
+  type DeployOption,
   type IconOption,
   type PackageManager,
   type ScaffoldOptions,
+  type ShadcnSetOption,
   type StoreOption,
   type StylingOption,
   type ValidationOption,
@@ -31,6 +33,8 @@ const VALIDATION_VALUES = new Set<ValidationOption>(["zod", "yup"]);
 const AUTH_VALUES = new Set<AuthOption>(["none", "jwt", "authjs"]);
 const STORE_VALUES = new Set<StoreOption>(["none", "zustand", "redux"]);
 const PM_VALUES = new Set<PackageManager>(["pnpm", "npm", "yarn"]);
+const SHADCN_SET_VALUES = new Set<ShadcnSetOption>(["minimal", "starter"]);
+const DEPLOY_VALUES = new Set<DeployOption>(["none", "vercel", "docker"]);
 const PRESET_VALUES = new Set<PresetId>([
   "custom",
   "minimal",
@@ -45,11 +49,13 @@ type FlagBag = {
   yes: boolean;
   upgrade: boolean;
   apply: boolean;
+  verbose: boolean;
   preset?: PresetId;
   packageManager?: PackageManager;
   icons?: IconOption;
   styling?: StylingOption;
   shadcn?: boolean;
+  shadcnSet?: ShadcnSetOption;
   validation?: ValidationOption;
   auth?: AuthOption;
   store?: StoreOption;
@@ -64,7 +70,7 @@ type FlagBag = {
   eslint?: boolean;
   prettier?: boolean;
   husky?: boolean;
-  docker?: boolean;
+  deploy?: DeployOption;
   ci?: boolean;
 };
 
@@ -109,6 +115,7 @@ function parseArgs(argv: string[]): FlagBag {
     yes: false,
     upgrade: false,
     apply: false,
+    verbose: false,
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -125,6 +132,10 @@ function parseArgs(argv: string[]): FlagBag {
     if (arg === "--diff") {
       out.upgrade = true;
       out.apply = false;
+      continue;
+    }
+    if (arg === "--verbose" || arg === "-V") {
+      out.verbose = true;
       continue;
     }
     if (arg === "--no-install") {
@@ -152,7 +163,6 @@ function parseArgs(argv: string[]): FlagBag {
       ["eslint", "--eslint", "--no-eslint"],
       ["prettier", "--prettier", "--no-prettier"],
       ["husky", "--husky", "--no-husky"],
-      ["docker", "--docker", "--no-docker"],
       ["ci", "--ci", "--no-ci"],
       ["shadcn", "--shadcn", "--no-shadcn"],
     ] as const;
@@ -221,6 +231,30 @@ function parseArgs(argv: string[]): FlagBag {
       i = icons.nextIndex;
       continue;
     }
+    const shadcnSet = readChoice(arg, "--shadcn-set", SHADCN_SET_VALUES, args, i);
+    if (shadcnSet) {
+      out.shadcnSet = shadcnSet.value;
+      out.shadcn = true;
+      i = shadcnSet.nextIndex;
+      continue;
+    }
+    const deploy = readChoice(arg, "--deploy", DEPLOY_VALUES, args, i);
+    if (deploy) {
+      out.deploy = deploy.value;
+      i = deploy.nextIndex;
+      continue;
+    }
+    // Back-compat aliases
+    if (arg === "--docker") {
+      out.deploy = "docker";
+      continue;
+    }
+    if (arg === "--no-docker") {
+      if (out.deploy === undefined || out.deploy === "docker") {
+        out.deploy = "none";
+      }
+      continue;
+    }
 
     if (!arg.startsWith("-") && !out.name) {
       out.name = arg;
@@ -247,6 +281,7 @@ Options:
   --store none|zustand|redux
   --styling none|tailwind|mui
   --shadcn | --no-shadcn
+  --shadcn-set minimal|starter
   --dark-mode | --no-dark-mode
   --validation zod|yup
   --auth none|jwt|authjs
@@ -261,8 +296,10 @@ Options:
   --eslint | --no-eslint
   --prettier | --no-prettier
   --husky | --no-husky
-  --docker | --no-docker
+  --deploy none|vercel|docker
+  --docker | --no-docker   (alias for --deploy docker / none)
   --ci | --no-ci
+  --verbose, -V       advisory tips (e.g. Query vs store)
   --help, -h
 
 Upgrade:
@@ -282,6 +319,10 @@ function applyFlagOverrides(
   if (flags.icons !== undefined) next.icons = flags.icons;
   if (flags.styling !== undefined) next.styling = flags.styling;
   if (flags.shadcn !== undefined) next.ui = flags.shadcn ? "shadcn" : "none";
+  if (flags.shadcnSet !== undefined) {
+    next.shadcnSet = flags.shadcnSet;
+    next.ui = "shadcn";
+  }
   if (flags.validation !== undefined) next.validation = flags.validation;
   if (flags.auth !== undefined) next.auth = flags.auth;
   if (flags.store !== undefined) next.store = flags.store;
@@ -298,7 +339,7 @@ function applyFlagOverrides(
   if (flags.eslint !== undefined) next.eslint = flags.eslint;
   if (flags.prettier !== undefined) next.prettier = flags.prettier;
   if (flags.husky !== undefined) next.husky = flags.husky;
-  if (flags.docker !== undefined) next.docker = flags.docker;
+  if (flags.deploy !== undefined) next.deploy = flags.deploy;
   if (flags.ci !== undefined) next.ci = flags.ci;
   return normalizeOptions(next);
 }
@@ -336,8 +377,8 @@ async function main(): Promise<void> {
         `Non-interactive: ${options.name} (${options.slug})`,
         flags.preset ? `preset=${flags.preset}` : null,
         `pm=${options.packageManager}`,
-        `styling=${options.styling} ui=${options.ui} auth=${options.auth} store=${options.store}`,
-        `endpoints=${options.endpoints} seo=${options.seo} i18n=${options.i18n} testing=${options.testing}`,
+        `styling=${options.styling} ui=${options.ui}${options.ui === "shadcn" ? `:${options.shadcnSet}` : ""} auth=${options.auth} store=${options.store}`,
+        `deploy=${options.deploy} endpoints=${options.endpoints} seo=${options.seo} i18n=${options.i18n} testing=${options.testing}`,
       ]
         .filter(Boolean)
         .join(" · "),
@@ -348,7 +389,7 @@ async function main(): Promise<void> {
     options = applyFlagOverrides(options, flags);
   }
 
-  const warnings = collectOptionWarnings(options);
+  const warnings = collectOptionWarnings(options, { verbose: flags.verbose });
   for (const warning of warnings) {
     p.log.warn(warning);
   }
@@ -359,7 +400,9 @@ async function main(): Promise<void> {
   const nextSteps = [
     `cd ${path.relative(process.cwd(), projectDir) || "."}`,
     options.noInstall ? `${pm.id} ${pm.installArgs.filter((a) => a !== "--ignore-workspace").join(" ")}`.trim() : null,
-    options.ui === "shadcn" ? "npx shadcn@latest add input   # optional" : null,
+    options.ui === "shadcn" && options.shadcnSet === "minimal"
+      ? "npx shadcn@latest add input   # or re-scaffold with --shadcn-set starter"
+      : null,
     options.endpoints
       ? `${pm.runScript("endpoints:generate")}   # when API schema is up`
       : null,

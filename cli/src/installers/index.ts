@@ -22,6 +22,7 @@ import { tailwindInstaller } from "./tailwind.js";
 import { tanstackQueryInstaller } from "./tanstack-query.js";
 import { testingInstaller } from "./testing.js";
 import { validationInstaller } from "./validation.js";
+import { vercelInstaller } from "./vercel.js";
 import type { Installer, InstallerContext } from "./types.js";
 
 export type { Installer, InstallerContext } from "./types.js";
@@ -48,6 +49,7 @@ export const installers: Installer[] = [
   prettierInstaller,
   huskyInstaller,
   dockerInstaller,
+  vercelInstaller,
   ciInstaller,
   appProvidersInstaller,
   surfaceInstaller,

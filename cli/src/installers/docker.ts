@@ -189,7 +189,7 @@ CMD ["node", "server.js"]
 
 export const dockerInstaller: Installer = {
   id: "docker",
-  active: (o) => o.docker,
+  active: (o) => o.deploy === "docker",
   async run({ projectDir, options }) {
     const addon = path.join(ADDONS_DIR, "docker");
     const pm = getPackageManager(options.packageManager);

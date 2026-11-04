@@ -7,12 +7,16 @@ export type AuthOption = "none" | "jwt" | "authjs";
 export type StylingOption = "none" | "tailwind" | "mui";
 /** shadcn only valid when styling === "tailwind" */
 export type UiOption = "none" | "shadcn";
+/** How many shadcn primitives to ship (only when ui === "shadcn") */
+export type ShadcnSetOption = "minimal" | "starter";
 export type DataOption = "rsc" | "tanstack-query";
 export type IconOption = "none" | "lucide" | "tabler";
 export type ValidationOption = "zod" | "yup";
 /** Client global state — opt-in */
 export type StoreOption = "none" | "zustand" | "redux";
 export type PackageManager = "pnpm" | "npm" | "yarn";
+/** Production deploy target */
+export type DeployOption = "none" | "vercel" | "docker";
 
 export type ScaffoldOptions = {
   /** Output directory / display name */
@@ -23,6 +27,8 @@ export type ScaffoldOptions = {
   auth: AuthOption;
   styling: StylingOption;
   ui: UiOption;
+  /** Ignored unless ui === "shadcn" */
+  shadcnSet: ShadcnSetOption;
   data: DataOption;
   store: StoreOption;
   icons: IconOption;
@@ -42,8 +48,8 @@ export type ScaffoldOptions = {
   prettier: boolean;
   /** Husky + lint-staged pre-commit */
   husky: boolean;
-  /** Multi-stage Docker (standalone Next) */
-  docker: boolean;
+  /** Deploy target: none | vercel | docker */
+  deploy: DeployOption;
   /** GitHub Actions CI */
   ci: boolean;
   /** Vitest unit/component tests */
@@ -59,6 +65,7 @@ export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
   auth: "none",
   styling: "none",
   ui: "none",
+  shadcnSet: "minimal",
   data: "rsc",
   store: "none",
   icons: "none",
@@ -72,7 +79,7 @@ export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
   eslint: true,
   prettier: true,
   husky: true,
-  docker: false,
+  deploy: "none",
   ci: true,
   testing: true,
   playwright: false,
@@ -93,6 +100,9 @@ export function normalizeOptions<T extends ScaffoldOptions>(options: T): T {
 
   if (next.styling !== "tailwind" && next.ui === "shadcn") {
     next = { ...next, ui: "none" };
+  }
+  if (next.ui !== "shadcn") {
+    next = { ...next, shadcnSet: "minimal" };
   }
   if (next.styling !== "tailwind" && next.darkMode) {
     next = { ...next, darkMode: false };

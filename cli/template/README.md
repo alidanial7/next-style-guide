@@ -21,8 +21,11 @@ Next.js App Router app generated with [next-style-guide](https://github.com/alid
 
 ```bash
 cp .env.example .env
+# Staging / production templates: .env.staging.example · .env.production.example
 __PACKAGE_MANAGER__ install
 __PACKAGE_MANAGER__ dev
 ```
+
+Env docs: [`docs/style-guide/ops/env.md`](docs/style-guide/ops/env.md)
 
 App: [http://localhost:3000](http://localhost:3000)

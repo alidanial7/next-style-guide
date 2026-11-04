@@ -77,9 +77,9 @@ node cli/dist/index.js ApiApp --yes --preset api-app --no-install
 | Preset | Focus |
 |:---|:---|
 | `minimal` | Base App Router only |
-| `api-app` | Tailwind · shadcn · dark · JWT · Query · Zustand · endpoints · Vitest · CI |
-| `marketing` | Tailwind · shadcn · dark · SEO · i18n · Vitest · CI |
-| `dashboard` | Tailwind · shadcn · dark · Query · Zustand (no endpoints) · Vitest · CI |
+| `api-app` | Tailwind · shadcn:starter · dark · JWT · Query · Zustand · endpoints · Vitest · CI |
+| `marketing` | Tailwind · shadcn:minimal · dark · SEO · i18n · Vercel · Vitest · CI |
+| `dashboard` | Tailwind · shadcn:starter · dark · Query · Zustand (no endpoints) · Vitest · CI |
 | `custom` | Answer every prompt (default in interactive mode) |
 
 ---
@@ -106,7 +106,7 @@ my-app/
 | 🎛️ | Preset: `minimal` / `api-app` / `marketing` / `custom` |
 | 📦 | Package manager: `pnpm` / `npm` / `yarn` |
 | 🎨 | Styling: `none` / `tailwind` / `mui` |
-| 🧩 | shadcn (Tailwind only) |
+| 🧩 | shadcn (Tailwind only): `minimal` (button) / `starter` (button · input · card · dialog) |
 | ✅ | Validation: `zod` / `yup` |
 | 🔑 | Auth: `none` / `jwt` / `authjs` |
 | 🗃️ | Client store: `none` / `zustand` / `redux` |
@@ -119,10 +119,10 @@ my-app/
 | 🌐 | i18n (next-intl) |
 | 🧪 | Vitest (+ optional Playwright) |
 | 🧹 | ESLint / Prettier / Husky |
-| 🐳 | Docker |
+| 🚀 | Deploy: `none` / `vercel` / `docker` |
 | 🤖 | GitHub Actions CI |
 
-Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--dark-mode`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--icons`, … (+ `--no-*`).
+Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--shadcn-set`, `--deploy`, `--dark-mode`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--icons`, … (+ `--no-*`).
 
 Default scaffold is a **neutral base** (no endpoints/envelope/store). Use presets for common stacks.
 
