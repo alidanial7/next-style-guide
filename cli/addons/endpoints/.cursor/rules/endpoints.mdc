@@ -1,0 +1,15 @@
+---
+description: OpenAPI codegen + API helpers
+globs: src/endpoints/**,scripts/generate-endpoints.ts,scripts/endpoints.codegen.json,src/utils/api-error.ts,src/utils/api-result.ts,src/utils/form-data.ts,src/utils/search-params.ts,src/utils/axios-instance.ts
+alwaysApply: false
+---
+
+# Endpoints
+
+`pnpm endpoints:generate` refreshes `src/endpoints/*` from OpenAPI (`scripts/endpoints.codegen.json`). Generated files are AUTO-GENERATED — do not edit (keep `Types.ts`).
+
+- Calls go through `api` (`@/utils/axios-instance`) only; UI uses TanStack Query when enabled.
+- `*Body` request; `*Call` `{ request: { path?, params?, body? } }`.
+- Uploads: `toApiBody` · query strings: `toSearchParams`.
+- Errors: `getApiErrorMessage` / `extractApiFieldErrors` from `@/utils/api-error`.
+- Envelope unwrap: `unwrapApiResult` from `@/utils/api-result`.

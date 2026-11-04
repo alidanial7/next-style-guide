@@ -1,0 +1,21 @@
+{
+  "name": "next-style-guide",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Opinionated Next.js style-guide template + create CLI (T3-style)",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter create-next-style-guide dev",
+    "build": "pnpm --filter create-next-style-guide build",
+    "start": "pnpm --filter create-next-style-guide start",
+    "typecheck": "pnpm --filter create-next-style-guide typecheck",
+    "smoke": "bash scripts/smoke.sh"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

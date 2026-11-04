@@ -1,0 +1,25 @@
+---
+description: Folder-per-component placement and hierarchy
+globs: src/app/**/*.tsx,src/components/**/*.tsx,!src/components/ui/**,!src/app/**/page.tsx,!src/app/**/layout.tsx,!src/app/**/not-found.tsx,!src/app/**/error.tsx
+alwaysApply: false
+---
+
+# Components
+
+## Folder-per-component
+
+- Every component lives in `<name>/index.tsx`.
+- Private children → `<name>/_components/<child>.tsx` (or nested folders).
+- Named export `function ComponentName()` — no default export for components.
+
+## Placement
+
+| Scope | Path |
+|-------|------|
+| One route only | `src/app/<route>/_components/<name>/` |
+| Layout / homepage only | `src/app/_components/<name>/` |
+| Shared across 2+ routes | `src/components/<name>/` |
+| Shared forms | `src/components/forms/<name>/` |
+| shadcn primitives | `src/components/ui/*` (flat) |
+
+Never park single-route UI in `src/components/`.
