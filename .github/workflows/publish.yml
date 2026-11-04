@@ -70,6 +70,35 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # Right after publish — npm mirrors can lag a few minutes; keep stderr quiet.
+      - name: Verify published tarball
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          PKG="create-next-style-guide@${VERSION}"
+          REG="https://registry.npmjs.org/"
+          echo "Waiting for ${PKG} on the registry (npm can lag after publish)…"
+          ok=0
+          # ~5 min: 30 × 10s; suppress npm's noisy E404 dumps while polling
+          for i in $(seq 1 30); do
+            if ver="$(npm view "${PKG}" version --registry="$REG" 2>/dev/null)"; then
+              echo "  visible: ${ver} (attempt ${i}/30)"
+              ok=1
+              break
+            fi
+            echo "  not visible yet (attempt ${i}/30), sleeping 10s…"
+            sleep 10
+          done
+          if [[ "$ok" -ne 1 ]]; then
+            echo "::error::${PKG} never appeared on npm after publish"
+            exit 1
+          fi
+          WORK="$(mktemp -d)"
+          cd "$WORK"
+          npx --yes --registry="$REG" "${PKG}" VerifyApp --yes --preset minimal --no-install
+          test -f VerifyApp/package.json
+          test -f VerifyApp/AGENTS.md
+          echo "Verified ${PKG} scaffold"
+
       - name: Commit version sync to main
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
@@ -108,28 +137,3 @@ jobs:
             ```
 
             Package: [`create-next-style-guide@${{ steps.ver.outputs.version }}`](https://www.npmjs.com/package/create-next-style-guide)
-
-      - name: Verify published tarball
-        run: |
-          VERSION="${{ steps.ver.outputs.version }}"
-          PKG="create-next-style-guide@${VERSION}"
-          echo "Waiting for ${PKG} on the registry…"
-          ok=0
-          for i in $(seq 1 18); do
-            if npm view "${PKG}" version --registry=https://registry.npmjs.org/; then
-              ok=1
-              break
-            fi
-            echo "  not visible yet (attempt ${i}/18), sleeping 10s…"
-            sleep 10
-          done
-          if [[ "$ok" -ne 1 ]]; then
-            echo "::error::${PKG} never appeared on npm after publish"
-            exit 1
-          fi
-          WORK="$(mktemp -d)"
-          cd "$WORK"
-          npx --yes "${PKG}" VerifyApp --yes --preset minimal --no-install
-          test -f VerifyApp/package.json
-          test -f VerifyApp/AGENTS.md
-          echo "Verified ${PKG} scaffold"
