@@ -2,7 +2,6 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { addDependencies } from "../helpers/package-json.js";
-import { wrapLayoutMain } from "../helpers/wrap-layout.js";
 import type { Installer } from "./types.js";
 
 const PROVIDER = `"use client";
@@ -41,7 +40,7 @@ alwaysApply: false
 
 # TanStack Query
 
-- \`QueryProvider\` wraps root layout (\`src/providers/query-provider.tsx\`).
+- \`QueryProvider\` (\`src/providers/query-provider.tsx\`) is composed via \`AppProviders\`.
 - Client data: \`useQuery\` / \`useMutation\`; keep RSC for server-friendly fetches.
 - Query keys: use generated \`get<EndpointName>QueryKey(...)\` when endpoints codegen is on — never ad-hoc \`["resource"]\` strings.
 - Default hook \`params\` to the matching \`*DefaultParams\` when present.
@@ -64,15 +63,6 @@ export const tanstackQueryInstaller: Installer = {
       PROVIDER,
       "utf8",
     );
-
-    const layoutPath = path.join(projectDir, "src", "app", "layout.tsx");
-    let layout = await fs.readFile(layoutPath, "utf8");
-    layout = wrapLayoutMain(layout, {
-      importStatement:
-        'import { QueryProvider } from "@/providers/query-provider";',
-      providerName: "QueryProvider",
-    });
-    await fs.writeFile(layoutPath, layout, "utf8");
 
     const ruleDir = path.join(projectDir, ".cursor", "rules");
     await fs.ensureDir(ruleDir);

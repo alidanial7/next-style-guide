@@ -1,7 +1,10 @@
 import { apiEnvelopeInstaller } from "./api-envelope.js";
+import { appProvidersInstaller } from "./app-providers.js";
 import { authAuthjsInstaller } from "./auth-authjs.js";
 import { authJwtInstaller } from "./auth-jwt.js";
 import { ciInstaller } from "./ci.js";
+import { darkModeInstaller } from "./dark-mode.js";
+import { dockerComposeInstaller } from "./docker-compose.js";
 import { dockerInstaller } from "./docker.js";
 import { endpointsInstaller } from "./endpoints.js";
 import { eslintInstaller } from "./eslint.js";
@@ -33,17 +36,20 @@ export const installers: Installer[] = [
   authJwtInstaller,
   authAuthjsInstaller,
   tailwindInstaller,
+  darkModeInstaller,
   muiInstaller,
   shadcnInstaller,
   validationInstaller,
   seoInstaller,
   i18nInstaller,
+  dockerComposeInstaller,
   testingInstaller,
   eslintInstaller,
   prettierInstaller,
   huskyInstaller,
   dockerInstaller,
   ciInstaller,
+  appProvidersInstaller,
   surfaceInstaller,
 ];
 

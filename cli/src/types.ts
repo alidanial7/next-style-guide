@@ -28,6 +28,8 @@ export type ScaffoldOptions = {
   icons: IconOption;
   validation: ValidationOption;
   i18n: boolean;
+  /** Tailwind dark mode via next-themes (requires styling=tailwind) */
+  darkMode: boolean;
   /** Unwrap `{ result, status, success, messages }` API envelopes */
   apiEnvelope: boolean;
   /** OpenAPI → `src/endpoints` codegen + axios helpers */
@@ -62,6 +64,7 @@ export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
   icons: "none",
   validation: "zod",
   i18n: false,
+  darkMode: false,
   /** Neutral base — enable via preset / flags when building an API client app */
   apiEnvelope: false,
   endpoints: false,
@@ -90,6 +93,9 @@ export function normalizeOptions<T extends ScaffoldOptions>(options: T): T {
 
   if (next.styling !== "tailwind" && next.ui === "shadcn") {
     next = { ...next, ui: "none" };
+  }
+  if (next.styling !== "tailwind" && next.darkMode) {
+    next = { ...next, darkMode: false };
   }
   if (next.playwright && !next.testing) {
     next = { ...next, testing: true };

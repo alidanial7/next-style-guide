@@ -10,16 +10,18 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -66,3 +68,34 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: GitHub Release notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            ## npm
+            ```bash
+            npx create-next-style-guide@${{ steps.ver.outputs.version }}
+            ```
+
+            Package: [`create-next-style-guide@${{ steps.ver.outputs.version }}`](https://www.npmjs.com/package/create-next-style-guide)
+
+      - name: Verify published tarball
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          # registry can lag a few seconds after publish
+          for i in 1 2 3 4 5; do
+            if npm view "create-next-style-guide@${VERSION}" version; then
+              break
+            fi
+            sleep 5
+          done
+          WORK="$(mktemp -d)"
+          cd "$WORK"
+          npx --yes "create-next-style-guide@${VERSION}" VerifyApp --yes --preset minimal --no-install
+          test -f VerifyApp/package.json
+          test -f VerifyApp/AGENTS.md
+          echo "Verified create-next-style-guide@${VERSION} scaffold"

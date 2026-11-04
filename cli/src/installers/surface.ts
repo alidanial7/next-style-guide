@@ -23,6 +23,7 @@ function stackLines(options: ScaffoldOptions): string[] {
     options.store === "none"
       ? "No client store"
       : `Client store: ${options.store}`,
+    options.darkMode ? "Dark mode (next-themes)" : "No dark mode",
     options.seo ? "SEO helpers (sitemap/robots)" : "No SEO helpers",
     options.data === "tanstack-query"
       ? "TanStack Query enabled"
@@ -129,6 +130,15 @@ function docsIndex(options: ScaffoldOptions): string {
   }
   if (options.store === "redux") {
     rows.push(["[Redux Toolkit](state/redux.md)", "client store"]);
+  }
+  if (options.darkMode) {
+    rows.push(["[Dark mode](ui/dark-mode.md)", "next-themes"]);
+  }
+  if (options.auth === "jwt" && options.endpoints) {
+    rows.push([
+      "[Docker Compose](ops/docker-compose.md)",
+      "local API stub",
+    ]);
   }
   if (options.seo) {
     rows.push(["[SEO](seo/overview.md)", "public-routes · sitemap · robots"]);
@@ -237,6 +247,21 @@ export const surfaceInstaller: Installer = {
         path.join(ADDONS_DIR, "docs", "ui", "icons.md"),
         path.join(projectDir, "docs", "style-guide", "ui", "icons.md"),
       );
+    }
+
+    if (options.auth === "jwt" && options.endpoints) {
+      const exampleSrc = path.join(
+        ADDONS_DIR,
+        "docs",
+        "examples",
+        "api-app-crud.md",
+      );
+      if (await fs.pathExists(exampleSrc)) {
+        await fs.copy(
+          exampleSrc,
+          path.join(projectDir, "docs", "examples", "api-app-crud.md"),
+        );
+      }
     }
 
     await fs.writeFile(

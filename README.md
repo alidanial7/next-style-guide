@@ -77,8 +77,9 @@ node cli/dist/index.js ApiApp --yes --preset api-app --no-install
 | Preset | Focus |
 |:---|:---|
 | `minimal` | Base App Router only |
-| `api-app` | Tailwind · shadcn · JWT · Query · endpoints · Vitest · CI |
-| `marketing` | Tailwind · shadcn · SEO · i18n · Vitest · CI |
+| `api-app` | Tailwind · shadcn · dark · JWT · Query · Zustand · endpoints · Vitest · CI |
+| `marketing` | Tailwind · shadcn · dark · SEO · i18n · Vitest · CI |
+| `dashboard` | Tailwind · shadcn · dark · Query · Zustand (no endpoints) · Vitest · CI |
 | `custom` | Answer every prompt (default in interactive mode) |
 
 ---
@@ -109,6 +110,7 @@ my-app/
 | ✅ | Validation: `zod` / `yup` |
 | 🔑 | Auth: `none` / `jwt` / `authjs` |
 | 🗃️ | Client store: `none` / `zustand` / `redux` |
+| 🌙 | Dark mode (Tailwind + next-themes) |
 | ✨ | Icons: `none` / `lucide` / `tabler` |
 | 📡 | TanStack Query |
 | 🔌 | OpenAPI endpoints codegen |
@@ -120,9 +122,18 @@ my-app/
 | 🐳 | Docker |
 | 🤖 | GitHub Actions CI |
 
-Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--icons`, … (+ `--no-*`).
+Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--dark-mode`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--icons`, … (+ `--no-*`).
 
-Default scaffold is a **neutral base** (no endpoints/envelope/store). Use `--preset api-app` or `--preset marketing` for common stacks.
+Default scaffold is a **neutral base** (no endpoints/envelope/store). Use presets for common stacks.
+
+Upgrade an existing app’s agent surface:
+
+```bash
+npx create-next-style-guide upgrade --diff .
+npx create-next-style-guide upgrade --apply .
+```
+
+Walkthrough: [`docs/examples/api-app-crud.md`](docs/examples/api-app-crud.md).
 
 ---
 

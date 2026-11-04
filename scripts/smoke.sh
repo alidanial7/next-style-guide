@@ -170,6 +170,9 @@ AUTHJS="$OUT/$NAME_AUTHJS"
 
 assert_file "$AUTHJS/src/lib/auth.ts"
 assert_file "$AUTHJS/src/app/api/auth/[...nextauth]/route.ts"
+assert_file "$AUTHJS/src/middleware.ts"
+assert_file "$AUTHJS/src/app/login/page.tsx"
+assert_file "$AUTHJS/src/app/login/_components/login-form/index.tsx"
 assert_grep "AUTH_SECRET" "$AUTHJS/.env.example"
 assert_grep "Auth: authjs" "$AUTHJS/src/app/_components/welcome-card/index.tsx"
 
@@ -186,7 +189,9 @@ assert_file "$I18N/src/i18n/request.ts"
 assert_file "$I18N/messages/en.json"
 assert_file "$I18N/.cursor/rules/i18n.mdc"
 assert_grep "withNextIntl" "$I18N/next.config.ts"
-assert_grep "NextIntlClientProvider" "$I18N/src/app/layout.tsx"
+assert_file "$I18N/src/providers/app-providers.tsx"
+assert_grep "NextIntlClientProvider" "$I18N/src/providers/app-providers.tsx"
+assert_grep "AppProviders" "$I18N/src/app/layout.tsx"
 assert_file "$I18N/vitest.config.mts"
 assert_file "$I18N/playwright.config.ts"
 assert_file "$I18N/e2e/home.spec.ts"
@@ -216,9 +221,25 @@ REDUX="$OUT/SmokeRedux"
 assert_file "$REDUX/src/stores/store.ts"
 assert_file "$REDUX/src/stores/hooks.ts"
 assert_file "$REDUX/src/providers/store-provider.tsx"
-assert_grep "StoreProvider" "$REDUX/src/app/layout.tsx"
+assert_file "$REDUX/src/providers/app-providers.tsx"
+assert_grep "StoreProvider" "$REDUX/src/providers/app-providers.tsx"
+assert_grep "AppProviders" "$REDUX/src/app/layout.tsx"
 assert_grep "@reduxjs/toolkit" "$REDUX/package.json"
 assert_grep "Client store: redux" "$REDUX/src/app/_components/welcome-card/index.tsx"
+
+echo "==> Scaffold dashboard + dark mode"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeDash" --yes --no-install --preset dashboard
+
+DASH="$OUT/SmokeDash"
+
+assert_file "$DASH/src/providers/theme-provider.tsx"
+assert_file "$DASH/src/providers/app-providers.tsx"
+assert_grep "ThemeProvider" "$DASH/src/providers/app-providers.tsx"
+assert_grep "QueryProvider" "$DASH/src/providers/app-providers.tsx"
+assert_file "$DASH/src/stores/app-store.ts"
+assert_grep "Dark mode" "$DASH/src/app/_components/welcome-card/index.tsx"
+assert_not_grep "axios" "$DASH/package.json"
 
 echo "==> Scaffold $NAME_MIN (--preset minimal)"
 cd "$OUT"
@@ -234,20 +255,71 @@ assert_not_grep "axios" "$MIN/package.json"
 assert_grep "No tests" "$MIN/src/app/_components/welcome-card/index.tsx"
 assert_grep "No client store" "$MIN/src/app/_components/welcome-card/index.tsx"
 
-echo "==> Real install + build ($NAME_BUILD, preset minimal)"
-cd "$OUT"
-node "$ROOT/cli/dist/index.js" "$NAME_BUILD" --yes --preset minimal
-BUILD="$OUT/$NAME_BUILD"
-cd "$BUILD"
-if NEXT_PUBLIC_APP_URL=http://localhost:3000 \
-  NEXT_PUBLIC_API_URL=http://localhost:8000 \
-  pnpm build; then
-  echo "  OK  pnpm build succeeded for $NAME_BUILD"
+echo "==> Upgrade --diff on minimal app"
+cd "$MIN"
+if node "$ROOT/cli/dist/index.js" upgrade --diff . >/tmp/nsg-upgrade.txt 2>&1; then
+  echo "  OK  upgrade --diff exited 0"
   pass=$((pass + 1))
 else
-  echo "  FAIL pnpm build failed for $NAME_BUILD"
+  echo "  FAIL upgrade --diff failed"
+  cat /tmp/nsg-upgrade.txt || true
   fail=$((fail + 1))
 fi
+
+run_install() {
+  local dir="$1"
+  local cmd="$2"
+  local attempt=1
+  while [[ "$attempt" -le 3 ]]; do
+    if (cd "$dir" && eval "$cmd"); then
+      return 0
+    fi
+    echo "  … install attempt $attempt failed, retrying"
+    attempt=$((attempt + 1))
+    sleep 3
+  done
+  return 1
+}
+
+run_build() {
+  local dir="$1"
+  local label="$2"
+  local cmd="$3"
+  cd "$dir"
+  if NEXT_PUBLIC_APP_URL=http://localhost:3000 \
+    NEXT_PUBLIC_API_URL=http://localhost:8000 \
+    AUTH_SECRET=smoke-secret \
+    eval "$cmd"; then
+    echo "  OK  $label"
+    pass=$((pass + 1))
+  else
+    echo "  FAIL $label"
+    fail=$((fail + 1))
+  fi
+}
+
+echo "==> Real install + build matrix"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "$NAME_BUILD" --yes --preset minimal
+run_build "$OUT/$NAME_BUILD" "pnpm build (minimal)" "pnpm build"
+
+cd "$OUT"
+# --no-install then retry npm install (avoids scaffold abort on flaky npm network)
+node "$ROOT/cli/dist/index.js" "SmokeNpm" --yes --pm npm --preset minimal --no-install
+if run_install "$OUT/SmokeNpm" "npm install"; then
+  run_build "$OUT/SmokeNpm" "npm run build (minimal)" "npm run build"
+else
+  echo "  FAIL npm install (SmokeNpm)"
+  fail=$((fail + 1))
+fi
+
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeApi" --yes --preset api-app \
+  --no-husky --no-testing --no-eslint --no-prettier
+assert_file "$OUT/SmokeApi/docker-compose.yml"
+assert_file "$OUT/SmokeApi/docs/examples/api-app-crud.md"
+assert_file "$OUT/SmokeApi/src/providers/app-providers.tsx"
+run_build "$OUT/SmokeApi" "pnpm build (api-app)" "pnpm build"
 
 echo
 echo "Smoke results: $pass passed, $fail failed"

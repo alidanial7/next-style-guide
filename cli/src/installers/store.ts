@@ -2,7 +2,6 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { addDependencies } from "../helpers/package-json.js";
-import { wrapLayoutMain } from "../helpers/wrap-layout.js";
 import type { Installer } from "./types.js";
 
 const ZUSTAND_STORE = `import { create } from "zustand";
@@ -103,7 +102,7 @@ alwaysApply: false
 
 - Store factory: \`src/stores/store.ts\` (\`makeStore\`).
 - Typed hooks: \`src/stores/hooks.ts\` (\`useAppDispatch\` / \`useAppSelector\`).
-- Provider: \`src/providers/store-provider.tsx\` wraps the root layout.
+- Provider: \`src/providers/store-provider.tsx\` (composed via \`AppProviders\`).
 - Prefer RTK slices; keep server secrets out of the client store.
 `;
 
@@ -150,15 +149,6 @@ export const storeInstaller: Installer = {
       "utf8",
     );
 
-    const layoutPath = path.join(projectDir, "src", "app", "layout.tsx");
-    let layout = await fs.readFile(layoutPath, "utf8");
-    layout = wrapLayoutMain(layout, {
-      importStatement:
-        'import { StoreProvider } from "@/providers/store-provider";',
-      providerName: "StoreProvider",
-    });
-    await fs.writeFile(layoutPath, layout, "utf8");
-
     await fs.writeFile(
       path.join(projectDir, ".cursor", "rules", "store.mdc"),
       REDUX_RULE,
@@ -170,7 +160,7 @@ export const storeInstaller: Installer = {
 
 - Store: \`src/stores/store.ts\`
 - Hooks: \`src/stores/hooks.ts\`
-- Provider: \`src/providers/store-provider.tsx\`
+- Provider: \`src/providers/store-provider.tsx\` (via \`AppProviders\`)
 `,
     );
 

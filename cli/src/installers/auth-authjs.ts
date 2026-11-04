@@ -32,6 +32,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  pages: {
+    signIn: "/login",
+  },
   session: { strategy: "jwt" },
   trustHost: true,
 });
@@ -42,16 +45,120 @@ const ROUTE = `import { handlers } from "@/lib/auth";
 export const { GET, POST } = handlers;
 `;
 
+const MIDDLEWARE = `import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+
+const publicPaths = ["/login", "/api/auth"];
+
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+  const isPublic = publicPaths.some(
+    (p) => pathname === p || pathname.startsWith(\`\${p}/\`),
+  );
+
+  if (!req.auth && !isPublic) {
+    const url = new URL("/login", req.nextUrl.origin);
+    url.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (req.auth && pathname === "/login") {
+    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
+  }
+
+  return NextResponse.next();
+});
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
+`;
+
+const LOGIN_PAGE = `import { Suspense } from "react";
+
+import { LoginForm } from "@/app/login/_components/login-form";
+
+export default function LoginPage() {
+  return (
+    <section className="hero">
+      <h1>Sign in</h1>
+      <p>Auth.js Credentials demo — replace authorize with your API.</p>
+      <Suspense fallback={<p>Loading…</p>}>
+        <LoginForm />
+      </Suspense>
+    </section>
+  );
+}
+`;
+
+const LOGIN_FORM = `"use client";
+
+import { useState, type FormEvent } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+export function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    const form = new FormData(event.currentTarget);
+    const result = await signIn("credentials", {
+      email: String(form.get("email") ?? ""),
+      password: String(form.get("password") ?? ""),
+      redirect: false,
+    });
+    setPending(false);
+    if (result?.error) {
+      setError("Invalid credentials");
+      return;
+    }
+    router.push(callbackUrl);
+    router.refresh();
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="card" style={{ marginTop: "1.5rem" }}>
+      <label style={{ display: "grid", gap: "0.35rem", marginBottom: "0.75rem" }}>
+        Email
+        <input name="email" type="email" required autoComplete="email" />
+      </label>
+      <label style={{ display: "grid", gap: "0.35rem", marginBottom: "0.75rem" }}>
+        Password
+        <input
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+        />
+      </label>
+      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
+      <button type="submit" disabled={pending}>
+        {pending ? "Signing in…" : "Sign in"}
+      </button>
+    </form>
+  );
+}
+`;
+
 const RULE = `---
 description: Auth.js (NextAuth) conventions
-globs: src/lib/auth.ts,src/app/api/auth/**/*
+globs: src/lib/auth.ts,src/app/api/auth/**/*,src/middleware.ts,src/app/login/**
 alwaysApply: false
 ---
 
 # Auth.js
 
-- Config: \`src/lib/auth.ts\` (Credentials demo included — replace \`authorize\`).
+- Config: \`src/lib/auth.ts\` (Credentials demo — replace \`authorize\`).
 - Route handlers: \`src/app/api/auth/[...nextauth]/route.ts\`.
+- Middleware: \`src/middleware.ts\` protects non-public routes; public: \`/login\`, \`/api/auth\`.
+- Login UI: \`src/app/login/\`.
 - Env: \`AUTH_SECRET\` (required in production).
 - Prefer \`auth()\` in Server Components; \`signIn\` / \`signOut\` on the client.
 `;
@@ -78,6 +185,27 @@ export const authAuthjsInstaller: Installer = {
       ROUTE,
     );
     await fs.writeFile(
+      path.join(projectDir, "src", "middleware.ts"),
+      MIDDLEWARE,
+      "utf8",
+    );
+    await fs.outputFile(
+      path.join(projectDir, "src", "app", "login", "page.tsx"),
+      LOGIN_PAGE,
+    );
+    await fs.outputFile(
+      path.join(
+        projectDir,
+        "src",
+        "app",
+        "login",
+        "_components",
+        "login-form",
+        "index.tsx",
+      ),
+      LOGIN_FORM,
+    );
+    await fs.writeFile(
       path.join(projectDir, ".cursor", "rules", "auth.mdc"),
       RULE,
       "utf8",
@@ -86,8 +214,10 @@ export const authAuthjsInstaller: Installer = {
       path.join(projectDir, "docs", "style-guide", "auth", "authjs.md"),
       `# Auth.js
 
-- \`src/lib/auth.ts\` — Credentials demo provider (replace \`authorize\`)
+- \`src/lib/auth.ts\` — Credentials demo (replace \`authorize\`)
 - \`src/app/api/auth/[...nextauth]/route.ts\`
+- \`src/middleware.ts\` — protect routes; public \`/login\` + \`/api/auth\`
+- \`src/app/login/\` — sample login page
 - Env: \`AUTH_SECRET\`
 `,
     );

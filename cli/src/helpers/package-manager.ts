@@ -29,7 +29,8 @@ export const PACKAGE_MANAGERS: Record<PackageManager, PackageManagerMeta> = {
     id: "npm",
     packageManagerField: null,
     lockfile: "package-lock.json",
-    installArgs: ["install"],
+    // --install-strategy=hoisted keeps the app isolated if nested under another workspace tree
+    installArgs: ["install", "--install-strategy=hoisted"],
     runScript: (script, args) => `npm run ${script}${joinArgs(args)}`,
     exec: (bin, args) => `npx ${bin}${joinArgs(args)}`,
   },

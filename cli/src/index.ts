@@ -12,6 +12,7 @@ import {
 } from "./presets.js";
 import { runPrompts } from "./prompts.js";
 import { scaffold } from "./scaffold.js";
+import { runUpgrade } from "./upgrade.js";
 import {
   DEFAULT_OPTIONS,
   normalizeOptions,
@@ -35,12 +36,15 @@ const PRESET_VALUES = new Set<PresetId>([
   "minimal",
   "api-app",
   "marketing",
+  "dashboard",
 ]);
 
 type FlagBag = {
   name?: string;
   noInstall: boolean;
   yes: boolean;
+  upgrade: boolean;
+  apply: boolean;
   preset?: PresetId;
   packageManager?: PackageManager;
   icons?: IconOption;
@@ -54,6 +58,7 @@ type FlagBag = {
   apiEnvelope?: boolean;
   seo?: boolean;
   i18n?: boolean;
+  darkMode?: boolean;
   testing?: boolean;
   playwright?: boolean;
   eslint?: boolean;
@@ -99,11 +104,29 @@ function readChoice<T extends string>(
 
 function parseArgs(argv: string[]): FlagBag {
   const args = argv.slice(2);
-  const out: FlagBag = { noInstall: false, yes: false };
+  const out: FlagBag = {
+    noInstall: false,
+    yes: false,
+    upgrade: false,
+    apply: false,
+  };
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!;
 
+    if (arg === "upgrade") {
+      out.upgrade = true;
+      continue;
+    }
+    if (arg === "--apply") {
+      out.apply = true;
+      continue;
+    }
+    if (arg === "--diff") {
+      out.upgrade = true;
+      out.apply = false;
+      continue;
+    }
     if (arg === "--no-install") {
       out.noInstall = true;
       continue;
@@ -123,6 +146,7 @@ function parseArgs(argv: string[]): FlagBag {
       ["apiEnvelope", "--api-envelope", "--no-api-envelope"],
       ["seo", "--seo", "--no-seo"],
       ["i18n", "--i18n", "--no-i18n"],
+      ["darkMode", "--dark-mode", "--no-dark-mode"],
       ["testing", "--testing", "--no-testing"],
       ["playwright", "--playwright", "--no-playwright"],
       ["eslint", "--eslint", "--no-eslint"],
@@ -212,15 +236,18 @@ ${TITLE} — ${PKG_NAME}
 
 Usage:
   npx create-next-style-guide [name] [options]
+  npx create-next-style-guide upgrade [--apply] [dir]
+  npx create-next-style-guide --diff [dir]
 
 Options:
   --yes, -y
   --no-install
-  --preset minimal|api-app|marketing|custom
+  --preset minimal|api-app|marketing|dashboard|custom
   --pm, --package-manager pnpm|npm|yarn
   --store none|zustand|redux
   --styling none|tailwind|mui
   --shadcn | --no-shadcn
+  --dark-mode | --no-dark-mode
   --validation zod|yup
   --auth none|jwt|authjs
   --icons none|lucide|tabler
@@ -237,6 +264,10 @@ Options:
   --docker | --no-docker
   --ci | --no-ci
   --help, -h
+
+Upgrade:
+  upgrade [--apply]   Diff (default) or apply AGENTS.md + core .cursor/rules
+  --diff              Alias for upgrade without --apply
 `);
 }
 
@@ -261,6 +292,7 @@ function applyFlagOverrides(
   if (flags.apiEnvelope !== undefined) next.apiEnvelope = flags.apiEnvelope;
   if (flags.seo !== undefined) next.seo = flags.seo;
   if (flags.i18n !== undefined) next.i18n = flags.i18n;
+  if (flags.darkMode !== undefined) next.darkMode = flags.darkMode;
   if (flags.testing !== undefined) next.testing = flags.testing;
   if (flags.playwright !== undefined) next.playwright = flags.playwright;
   if (flags.eslint !== undefined) next.eslint = flags.eslint;
@@ -273,6 +305,12 @@ function applyFlagOverrides(
 
 async function main(): Promise<void> {
   const flags = parseArgs(process.argv);
+
+  if (flags.upgrade) {
+    const projectDir = path.resolve(process.cwd(), flags.name ?? ".");
+    await runUpgrade({ projectDir, apply: flags.apply });
+    return;
+  }
 
   let options: ScaffoldOptions;
 

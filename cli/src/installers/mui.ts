@@ -39,7 +39,7 @@ alwaysApply: false
 
 # MUI
 
-- Theme via \`MuiProvider\` (\`src/providers/mui-provider.tsx\`) in root layout.
+- Theme via \`MuiProvider\` (\`src/providers/mui-provider.tsx\`), composed in \`AppProviders\`.
 - Prefer MUI components (\`Button\`, \`TextField\`, \`Stack\`, …) over ad-hoc CSS.
 - Do not add shadcn — incompatible with this styling choice.
 - Emotion cache: \`@mui/material-nextjs\` App Router provider (already wired).
@@ -62,34 +62,6 @@ export const muiInstaller: Installer = {
       RULE,
       "utf8",
     );
-
-    const layoutPath = path.join(projectDir, "src", "app", "layout.tsx");
-    let layout = await fs.readFile(layoutPath, "utf8");
-
-    if (!layout.includes("MuiProvider")) {
-      layout = layout.replace(
-        'import "./globals.css";\n',
-        'import "./globals.css";\n\nimport { MuiProvider } from "@/providers/mui-provider";\n',
-      );
-
-      if (layout.includes("<QueryProvider>")) {
-        layout = layout.replace(
-          "<QueryProvider>",
-          "<MuiProvider>\n        <QueryProvider>",
-        );
-        layout = layout.replace(
-          "</QueryProvider>",
-          "</QueryProvider>\n        </MuiProvider>",
-        );
-      } else {
-        layout = layout.replace(
-          "<main>{children}</main>",
-          "<MuiProvider>\n          <main>{children}</main>\n        </MuiProvider>",
-        );
-      }
-
-      await fs.writeFile(layoutPath, layout, "utf8");
-    }
 
     await addDependencies(projectDir, {
       "@mui/material": "^6.4.0",

@@ -25,7 +25,7 @@ const MESSAGES_EN = `{
 
 const RULE = `---
 description: next-intl i18n conventions
-globs: src/i18n/**,messages/**,src/app/**/layout.tsx
+globs: src/i18n/**,messages/**,src/providers/app-providers.tsx
 alwaysApply: false
 ---
 
@@ -34,7 +34,7 @@ alwaysApply: false
 - Request config: \`src/i18n/request.ts\`.
 - Messages: \`messages/<locale>.json\`.
 - Prefer \`useTranslations\` / \`getTranslations\` — avoid hardcoded copy when a key exists.
-- Root layout sets \`lang={locale}\` and wraps with \`NextIntlClientProvider\`.
+- \`NextIntlClientProvider\` is composed in \`AppProviders\`; root layout loads locale/messages.
 `;
 
 export const i18nInstaller: Installer = {
@@ -59,7 +59,7 @@ export const i18nInstaller: Installer = {
       `# i18n
 
 next-intl: \`src/i18n/request.ts\` + \`messages/en.json\`
-Plugin wired in \`next.config.ts\`.
+Plugin wired in \`next.config.ts\`. Provider via \`AppProviders\`.
 `,
     );
 
@@ -76,50 +76,6 @@ Plugin wired in \`next.config.ts\`.
         );
         await fs.writeFile(nextConfigPath, nextConfig, "utf8");
       }
-    }
-
-    const layoutPath = path.join(projectDir, "src", "app", "layout.tsx");
-    let layout = await fs.readFile(layoutPath, "utf8");
-    if (!layout.includes("NextIntlClientProvider")) {
-      layout = layout.replace(
-        'import "./globals.css";\n',
-        'import "./globals.css";\n\nimport { NextIntlClientProvider } from "next-intl";\nimport { getLocale, getMessages } from "next-intl/server";\n',
-      );
-      layout = layout.replace(
-        /export default function RootLayout/,
-        "export default async function RootLayout",
-      );
-      layout = layout.replace(
-        /export default async function RootLayout/,
-        "export default async function RootLayout",
-      );
-
-      // Inject locale/messages before return
-      if (!layout.includes("getLocale()")) {
-        layout = layout.replace(
-          /\) \{\n  return \(/,
-          `) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-
-  return (`,
-        );
-      }
-
-      layout = layout.replace(/<html lang="en">/, "<html lang={locale}>");
-
-      if (!layout.includes("NextIntlClientProvider")) {
-        layout = layout.replace(
-          /<body>\n/,
-          "<body>\n        <NextIntlClientProvider messages={messages}>\n",
-        );
-        layout = layout.replace(
-          /\n      <\/body>/,
-          "\n        </NextIntlClientProvider>\n      </body>",
-        );
-      }
-
-      await fs.writeFile(layoutPath, layout, "utf8");
     }
 
     await addDependencies(projectDir, {

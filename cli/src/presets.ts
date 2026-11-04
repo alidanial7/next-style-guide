@@ -1,6 +1,11 @@
 import type { ScaffoldOptions } from "./types.js";
 
-export type PresetId = "custom" | "minimal" | "api-app" | "marketing";
+export type PresetId =
+  | "custom"
+  | "minimal"
+  | "api-app"
+  | "marketing"
+  | "dashboard";
 
 type OptionSeed = Omit<ScaffoldOptions, "name" | "slug" | "noInstall">;
 
@@ -15,6 +20,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     icons: "none",
     validation: "zod",
     i18n: false,
+    darkMode: false,
     apiEnvelope: false,
     endpoints: false,
     seo: false,
@@ -36,6 +42,7 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     icons: "lucide",
     validation: "zod",
     i18n: false,
+    darkMode: true,
     apiEnvelope: true,
     endpoints: true,
     seo: false,
@@ -57,9 +64,32 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     icons: "lucide",
     validation: "zod",
     i18n: true,
+    darkMode: true,
     apiEnvelope: false,
     endpoints: false,
     seo: true,
+    eslint: true,
+    prettier: true,
+    husky: true,
+    docker: false,
+    ci: true,
+    testing: true,
+    playwright: false,
+  },
+  dashboard: {
+    packageManager: "pnpm",
+    auth: "none",
+    styling: "tailwind",
+    ui: "shadcn",
+    data: "tanstack-query",
+    store: "zustand",
+    icons: "lucide",
+    validation: "zod",
+    i18n: false,
+    darkMode: true,
+    apiEnvelope: false,
+    endpoints: false,
+    seo: false,
     eslint: true,
     prettier: true,
     husky: true,
@@ -80,6 +110,7 @@ export function describePreset(id: Exclude<PresetId, "custom">): string {
     `validation=${seed.validation}`,
     seed.endpoints ? "endpoints" : null,
     seed.data === "tanstack-query" ? "query" : null,
+    seed.darkMode ? "dark" : null,
     seed.seo ? "seo" : null,
     seed.i18n ? "i18n" : null,
     seed.testing ? "vitest" : null,
@@ -99,6 +130,9 @@ export function collectOptionWarnings(options: ScaffoldOptions): string[] {
   }
   if (options.ui === "shadcn" && options.styling !== "tailwind") {
     warnings.push("shadcn requires Tailwind — ui forced to none.");
+  }
+  if (options.darkMode && options.styling !== "tailwind") {
+    warnings.push("Dark mode requires Tailwind — disabled.");
   }
   if (options.apiEnvelope && !options.endpoints) {
     warnings.push(

@@ -53,6 +53,7 @@ async function promptCustomOptions(
   );
 
   let ui: ScaffoldOptions["ui"] = "none";
+  let darkMode = false;
   if (styling === "tailwind") {
     const useShadcn = assertNotCancel(
       await p.confirm({
@@ -61,6 +62,12 @@ async function promptCustomOptions(
       }),
     );
     ui = useShadcn ? "shadcn" : "none";
+    darkMode = assertNotCancel(
+      await p.confirm({
+        message: "Add dark mode (next-themes)?",
+        initialValue: base.darkMode,
+      }),
+    );
   }
 
   const icons = assertNotCancel(
@@ -236,6 +243,7 @@ async function promptCustomOptions(
     ...base,
     styling,
     ui,
+    darkMode,
     icons,
     validation,
     data: useTanstackQuery ? "tanstack-query" : "rsc",
@@ -309,6 +317,11 @@ export async function runPrompts(
           value: "marketing" as const,
           label: "Marketing / site",
           hint: describePreset("marketing"),
+        },
+        {
+          value: "dashboard" as const,
+          label: "Dashboard",
+          hint: describePreset("dashboard"),
         },
         {
           value: "custom" as const,
