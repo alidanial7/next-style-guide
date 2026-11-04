@@ -86,16 +86,24 @@ jobs:
       - name: Verify published tarball
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
-          # registry can lag a few seconds after publish
-          for i in 1 2 3 4 5; do
-            if npm view "create-next-style-guide@${VERSION}" version; then
+          PKG="create-next-style-guide@${VERSION}"
+          echo "Waiting for ${PKG} on the registry…"
+          ok=0
+          for i in $(seq 1 18); do
+            if npm view "${PKG}" version --registry=https://registry.npmjs.org/; then
+              ok=1
               break
             fi
-            sleep 5
+            echo "  not visible yet (attempt ${i}/18), sleeping 10s…"
+            sleep 10
           done
+          if [[ "$ok" -ne 1 ]]; then
+            echo "::error::${PKG} never appeared on npm after publish"
+            exit 1
+          fi
           WORK="$(mktemp -d)"
           cd "$WORK"
-          npx --yes "create-next-style-guide@${VERSION}" VerifyApp --yes --preset minimal --no-install
+          npx --yes "${PKG}" VerifyApp --yes --preset minimal --no-install
           test -f VerifyApp/package.json
           test -f VerifyApp/AGENTS.md
-          echo "Verified create-next-style-guide@${VERSION} scaffold"
+          echo "Verified ${PKG} scaffold"
