@@ -35,7 +35,8 @@ export const huskyInstaller: Installer = {
       },
       "devDependencies",
     );
-    await addScripts(projectDir, { prepare: "husky" });
+    // `|| true` so install still succeeds if git isn't available
+    await addScripts(projectDir, { prepare: "husky || true" });
 
     const tsHooks: string[] = [];
     if (options.prettier) tsHooks.push("prettier --write");

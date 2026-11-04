@@ -1,11 +1,15 @@
 import fs from "fs-extra";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import * as p from "@clack/prompts";
-import { execSync } from "node:child_process";
 import color from "picocolors";
 
 import { TEMPLATE_DIR } from "./constants.js";
 import { getPackageManager } from "./helpers/package-manager.js";
+import {
+  runPackageInstall,
+  yieldUi,
+} from "./helpers/run-package-install.js";
 import { replaceTokensInTree } from "./helpers/replace-tokens.js";
 import { runInstallers } from "./installers/index.js";
 import type { ScaffoldOptions } from "./types.js";
@@ -25,6 +29,7 @@ export async function scaffold(options: ScaffoldOptions): Promise<string> {
 
   const spin = p.spinner();
   spin.start("Copying template");
+  await yieldUi();
 
   if (!(await fs.pathExists(TEMPLATE_DIR))) {
     spin.stop("Template missing");
@@ -46,33 +51,59 @@ export async function scaffold(options: ScaffoldOptions): Promise<string> {
   }
 
   spin.message("Applying project tokens");
+  await yieldUi();
   await replaceTokensInTree(projectDir, {
     __PROJECT_NAME__: options.name,
     __PROJECT_SLUG__: options.slug,
     __PACKAGE_MANAGER__: pm.id,
   });
 
-  spin.message("Running installers");
-  const ran = await runInstallers({ projectDir, options });
+  const ran = await runInstallers({ projectDir, options }, async (step) => {
+    spin.message(`Installer (${step.index}/${step.total}): ${step.id}`);
+    await yieldUi();
+  });
+
+  spin.stop(
+    ran.length
+      ? `Scaffold ready · ${ran.length} installer${ran.length === 1 ? "" : "s"}`
+      : "Scaffold ready · base template",
+  );
 
   if (!options.noInstall) {
-    spin.message(`Installing dependencies (${pm.id})`);
-    try {
-      execSync(`${pm.id} ${pm.installArgs.join(" ")}`, {
-        cwd: projectDir,
-        stdio: "ignore",
-      });
-    } catch {
-      if (pm.id !== "npm") {
-        spin.message(`${pm.id} failed — trying npm`);
-        execSync("npm install", { cwd: projectDir, stdio: "ignore" });
-      } else {
-        throw new Error("npm install failed");
+    if (options.husky) {
+      try {
+        execFileSync("git", ["init"], {
+          cwd: projectDir,
+          stdio: "ignore",
+        });
+      } catch {
+        // husky prepare is best-effort without a repo
       }
     }
-  }
 
-  spin.stop("Project ready");
+    p.log.step(
+      `Installing dependencies with ${color.cyan(pm.id)} — live output below…`,
+    );
+    try {
+      await runPackageInstall(projectDir, pm);
+      p.log.success("Dependencies installed");
+    } catch (error) {
+      if (pm.id !== "npm") {
+        p.log.warn(`${pm.id} failed — retrying with npm…`);
+        const npm = getPackageManager("npm");
+        await runPackageInstall(projectDir, npm);
+        p.log.success("Dependencies installed (npm)");
+      } else {
+        const message =
+          error instanceof Error ? error.message : String(error);
+        throw new Error(`Dependency install failed: ${message}`);
+      }
+    }
+  } else {
+    p.log.info(
+      color.dim(`Skipped install · run ${pm.id} install in the project folder`),
+    );
+  }
 
   if (ran.length) {
     p.log.info(`Installers: ${ran.join(", ")}`);

@@ -55,12 +55,31 @@ export const installers: Installer[] = [
   surfaceInstaller,
 ];
 
-export async function runInstallers(ctx: InstallerContext): Promise<string[]> {
+export type InstallerProgress = {
+  id: string;
+  index: number;
+  total: number;
+};
+
+export async function runInstallers(
+  ctx: InstallerContext,
+  onProgress?: (step: InstallerProgress) => void | Promise<void>,
+): Promise<string[]> {
+  const active = installers.filter((installer) =>
+    installer.active(ctx.options),
+  );
   const ran: string[] = [];
-  for (const installer of installers) {
-    if (!installer.active(ctx.options)) continue;
+
+  for (let i = 0; i < active.length; i += 1) {
+    const installer = active[i]!;
+    await onProgress?.({
+      id: installer.id,
+      index: i + 1,
+      total: active.length,
+    });
     await installer.run(ctx);
     ran.push(installer.id);
   }
+
   return ran;
 }

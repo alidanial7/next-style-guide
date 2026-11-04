@@ -23,12 +23,12 @@ import {
   type ValidationOption,
 } from "./types.js";
 
-function assertNotCancel<T>(value: T | symbol): T {
+function assertNotCancel<T>(value: T): Exclude<T, symbol> {
   if (p.isCancel(value)) {
     p.cancel("Scaffold cancelled.");
     process.exit(0);
   }
-  return value;
+  return value as Exclude<T, symbol>;
 }
 
 async function promptCustomOptions(
@@ -316,9 +316,10 @@ export async function runPrompts(
       placeholder: "my-app",
       initialValue: initialName ?? "my-app",
       validate(value) {
-        if (!value.trim()) return "Name is required.";
+        const next = value ?? "";
+        if (!next.trim()) return "Name is required.";
         try {
-          slugify(value);
+          slugify(next);
         } catch (error) {
           return error instanceof Error ? error.message : "Invalid name.";
         }
