@@ -7,10 +7,21 @@
   "bin": {
     "create-next-style-guide": "dist/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alidanial7/next-style-guide.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/alidanial7/next-style-guide#readme",
+  "bugs": {
+    "url": "https://github.com/alidanial7/next-style-guide/issues"
+  },
   "files": [
     "dist",
     "template",
-    "addons"
+    "addons",
+    "README.md",
+    "LICENSE"
   ],
   "exports": {
     ".": "./dist/index.js"
@@ -23,7 +34,9 @@
     "build": "tsup",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "pnpm build"
+    "sync-npm-meta": "node ./scripts/sync-npm-meta.mjs",
+    "prepack": "node ./scripts/sync-npm-meta.mjs",
+    "prepublishOnly": "pnpm build && node ./scripts/sync-npm-meta.mjs"
   },
   "dependencies": {
     "@clack/prompts": "^0.9.1",

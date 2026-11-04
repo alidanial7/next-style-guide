@@ -11,3 +11,6 @@ _gen_smoke/
 !.env.*.example
 coverage/
 *.tsbuildinfo
+# Copied from repo root on npm pack/publish (single source: ./README.md, ./LICENSE)
+cli/README.md
+cli/LICENSE

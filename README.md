@@ -174,7 +174,7 @@ git tag v0.1.5
 git push origin v0.1.5
 ```
 
-Workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) runs typecheck + smoke, publishes, then commits `VERSION` + root/`cli` `package.json` back to `main`.
+Workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) runs typecheck + smoke, publishes, then commits `VERSION` + root/`cli` `package.json` back to `main`. On pack/publish, root `README.md` + `LICENSE` are copied into `cli/` so the [npm package page](https://www.npmjs.com/package/create-next-style-guide) shows the same docs.
 
 Tag format: `v` + semver (`v0.1.5`, `v1.0.0-beta.1`, …).
 
