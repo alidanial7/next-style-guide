@@ -22,8 +22,6 @@ function workflowYaml(options: ScaffoldOptions): string {
   if (options.packageManager === "pnpm") {
     setupSteps.push(`      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 `);
   }
 
