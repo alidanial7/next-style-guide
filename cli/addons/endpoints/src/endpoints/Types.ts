@@ -38,7 +38,7 @@ export type ApiRequestPaginated<TParams = undefined, TBody = undefined> =
 /*                                  Response                                  */
 /* -------------------------------------------------------------------------- */
 
-/** Django-style envelope for a single object `result`. */
+/** API envelope for a single object `result`. */
 export type ApiObjectResponse<T> = {
   result: T;
   status: number;
@@ -46,7 +46,7 @@ export type ApiObjectResponse<T> = {
   messages: Record<string, unknown>;
 };
 
-/** Django-style envelope for an unpaginated list `result`. */
+/** API envelope for an unpaginated list `result`. */
 export type ApiListResponse<T> = {
   result: T[];
   status: number;
@@ -54,7 +54,7 @@ export type ApiListResponse<T> = {
   messages: Record<string, unknown>;
 };
 
-/** Django-style envelope for DRF page-number paginated `result`. */
+/** API envelope for page-number paginated `result`. */
 export type ApiPaginatedResponse<T> = {
   result: {
     count: number;
@@ -78,7 +78,7 @@ export type ApiLimitOffsetPage<T> = {
   results: T[];
 };
 
-/** Django-style envelope for limit/offset paginated `result`. */
+/** API envelope for limit/offset paginated `result`. */
 export type ApiLimitOffsetResponse<T> = {
   result: ApiLimitOffsetPage<T>;
   status: number;

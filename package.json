@@ -2,7 +2,7 @@
   "name": "next-style-guide",
   "version": "0.1.0",
   "private": true,
-  "description": "Opinionated Next.js style-guide template + create CLI (T3-style)",
+  "description": "Opinionated Next.js style-guide template + create CLI",
   "license": "MIT",
   "packageManager": "pnpm@9.15.0",
   "engines": {

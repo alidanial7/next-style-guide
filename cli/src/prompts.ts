@@ -6,6 +6,7 @@ import { slugify } from "./helpers/slugify.js";
 import {
   DEFAULT_OPTIONS,
   normalizeUiOptions,
+  type AuthOption,
   type IconOption,
   type ScaffoldOptions,
   type StylingOption,
@@ -136,6 +137,37 @@ export async function runPrompts(
     }),
   );
 
+  const auth = assertNotCancel(
+    await p.select({
+      message: "Auth?",
+      options: [
+        {
+          value: "none" satisfies AuthOption,
+          label: "None",
+          hint: "add later",
+        },
+        {
+          value: "jwt" satisfies AuthOption,
+          label: "JWT",
+          hint: "Bearer + refresh · token-storage",
+        },
+        {
+          value: "authjs" satisfies AuthOption,
+          label: "Auth.js",
+          hint: "NextAuth stub",
+        },
+      ],
+      initialValue: DEFAULT_OPTIONS.auth,
+    }),
+  );
+
+  const seo = assertNotCancel(
+    await p.confirm({
+      message: "Add SEO helpers (public-routes, sitemap, robots)?",
+      initialValue: DEFAULT_OPTIONS.seo,
+    }),
+  );
+
   const eslint = assertNotCancel(
     await p.confirm({
       message: "Enhanced ESLint (import sort, func-style, jsx-sort-props)?",
@@ -193,6 +225,8 @@ export async function runPrompts(
     validation,
     data: useTanstackQuery ? ("tanstack-query" as const) : ("rsc" as const),
     endpoints,
+    auth,
+    seo,
     eslint,
     prettier,
     husky,

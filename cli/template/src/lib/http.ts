@@ -2,7 +2,7 @@ import { env } from "@/lib/env";
 
 /**
  * Minimal JSON fetch helper.
- * When django-envelope installer lands, swap this for envelope parsing.
+ * Prefer generated endpoints / axios helpers when that option is enabled.
  */
 export async function apiFetch<T>(
   path: string,

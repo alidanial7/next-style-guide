@@ -9,6 +9,7 @@ import { scaffold } from "./scaffold.js";
 import {
   DEFAULT_OPTIONS,
   normalizeUiOptions,
+  type AuthOption,
   type IconOption,
   type ScaffoldOptions,
   type StylingOption,
@@ -18,6 +19,7 @@ import {
 const ICON_VALUES = new Set<IconOption>(["none", "lucide", "tabler"]);
 const STYLING_VALUES = new Set<StylingOption>(["none", "tailwind", "mui"]);
 const VALIDATION_VALUES = new Set<ValidationOption>(["zod", "yup"]);
+const AUTH_VALUES = new Set<AuthOption>(["none", "jwt", "authjs"]);
 
 type FlagBag = {
   name?: string;
@@ -27,8 +29,10 @@ type FlagBag = {
   styling?: StylingOption;
   shadcn?: boolean;
   validation?: ValidationOption;
+  auth?: AuthOption;
   tanstackQuery?: boolean;
   endpoints?: boolean;
+  seo?: boolean;
   eslint?: boolean;
   prettier?: boolean;
   husky?: boolean;
@@ -74,6 +78,11 @@ function parseArgs(argv: string[]): FlagBag {
     const ep = parseBoolFlag(arg, "--endpoints", "--no-endpoints");
     if (ep !== undefined) {
       out.endpoints = ep;
+      continue;
+    }
+    const seo = parseBoolFlag(arg, "--seo", "--no-seo");
+    if (seo !== undefined) {
+      out.seo = seo;
       continue;
     }
     const es = parseBoolFlag(arg, "--eslint", "--no-eslint");
@@ -145,6 +154,24 @@ function parseArgs(argv: string[]): FlagBag {
       continue;
     }
 
+    if (arg.startsWith("--auth=")) {
+      const value = arg.slice("--auth=".length) as AuthOption;
+      if (!AUTH_VALUES.has(value)) {
+        throw new Error(`Invalid --auth=${value}. Use none | jwt | authjs.`);
+      }
+      out.auth = value;
+      continue;
+    }
+    if (arg === "--auth") {
+      const value = args[i + 1] as AuthOption | undefined;
+      if (!value || !AUTH_VALUES.has(value)) {
+        throw new Error(`Invalid --auth. Use none | jwt | authjs.`);
+      }
+      out.auth = value;
+      i += 1;
+      continue;
+    }
+
     if (arg.startsWith("--icons=")) {
       const value = arg.slice("--icons=".length) as IconOption;
       if (!ICON_VALUES.has(value)) {
@@ -185,11 +212,13 @@ Options:
   --yes, -y              Skip prompts (use defaults + other flags)
   --no-install           Skip dependency install
   --styling <name>       none | tailwind | mui
-  --shadcn | --no-shadcn (only with --styling tailwind)
+  --shadcn | --no-shadcn
   --validation <name>    zod | yup
+  --auth <name>          none | jwt | authjs
   --icons <name>         none | lucide | tabler
   --tanstack-query | --no-tanstack-query
   --endpoints | --no-endpoints
+  --seo | --no-seo
   --eslint | --no-eslint
   --prettier | --no-prettier
   --husky | --no-husky
@@ -208,10 +237,12 @@ function applyFlagOverrides(
   if (flags.styling !== undefined) next.styling = flags.styling;
   if (flags.shadcn !== undefined) next.ui = flags.shadcn ? "shadcn" : "none";
   if (flags.validation !== undefined) next.validation = flags.validation;
+  if (flags.auth !== undefined) next.auth = flags.auth;
   if (flags.tanstackQuery !== undefined) {
     next.data = flags.tanstackQuery ? "tanstack-query" : "rsc";
   }
   if (flags.endpoints !== undefined) next.endpoints = flags.endpoints;
+  if (flags.seo !== undefined) next.seo = flags.seo;
   if (flags.eslint !== undefined) next.eslint = flags.eslint;
   if (flags.prettier !== undefined) next.prettier = flags.prettier;
   if (flags.husky !== undefined) next.husky = flags.husky;
@@ -241,8 +272,8 @@ async function main(): Promise<void> {
     p.log.info(
       [
         `Non-interactive: ${options.name} (${options.slug})`,
-        `styling=${options.styling} ui=${options.ui} validation=${options.validation}`,
-        `icons=${options.icons} data=${options.data}`,
+        `styling=${options.styling} ui=${options.ui} validation=${options.validation} auth=${options.auth}`,
+        `icons=${options.icons} data=${options.data} seo=${options.seo}`,
         `endpoints=${options.endpoints} eslint=${options.eslint} prettier=${options.prettier}`,
         `husky=${options.husky} docker=${options.docker} ci=${options.ci}`,
       ].join(" · "),

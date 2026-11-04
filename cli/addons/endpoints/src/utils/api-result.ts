@@ -1,5 +1,5 @@
 /**
- * django-style-guide endpoints usually return `{ result, status, success, messages }`.
+ * Many APIs return `{ result, status, success, messages }`.
  * Some auth responses may be the bare payload.
  */
 export function unwrapApiResult<T>(data: unknown): T {

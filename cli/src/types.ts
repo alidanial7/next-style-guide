@@ -2,7 +2,7 @@
  * Scaffold options.
  * Base ships with safe defaults; installers flip features on.
  */
-export type AuthOption = "none" | "django-jwt" | "authjs";
+export type AuthOption = "none" | "jwt" | "authjs";
 /** CSS / component system foundation */
 export type StylingOption = "none" | "tailwind" | "mui";
 /** shadcn only valid when styling === "tailwind" */
@@ -23,10 +23,12 @@ export type ScaffoldOptions = {
   icons: IconOption;
   validation: ValidationOption;
   i18n: boolean;
-  /** Typed fetch client matched to django-style-guide envelope */
-  djangoEnvelope: boolean;
+  /** Unwrap `{ result, status, success, messages }` API envelopes */
+  apiEnvelope: boolean;
   /** OpenAPI → `src/endpoints` codegen + axios helpers */
   endpoints: boolean;
+  /** SEO helpers: public-routes, sitemap, robots */
+  seo: boolean;
   /** Enhanced ESLint (import sort, func-style, jsx-sort-props) */
   eslint: boolean;
   /** Prettier + format script */
@@ -50,8 +52,9 @@ export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
   icons: "none",
   validation: "zod",
   i18n: false,
-  djangoEnvelope: true,
+  apiEnvelope: true,
   endpoints: true,
+  seo: false,
   eslint: true,
   prettier: true,
   husky: true,
@@ -70,9 +73,9 @@ export const ICON_PACKAGES: Record<
 };
 
 /** Enforce incompatible UI combinations. */
-export function normalizeUiOptions<T extends Pick<ScaffoldOptions, "styling" | "ui">>(
-  options: T,
-): T {
+export function normalizeUiOptions<
+  T extends Pick<ScaffoldOptions, "styling" | "ui">,
+>(options: T): T {
   if (options.styling !== "tailwind" && options.ui === "shadcn") {
     return { ...options, ui: "none" };
   }

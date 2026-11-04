@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Ship an opinionated Next.js app in minutes</strong><br/>
-  App Router · route-colocated _components/ · Zod env · Cursor rules · docs that match the code
+  App Router · route-colocated _components/ · Zod/Yup · Cursor rules · docs that match the code
 </p>
 
 <p align="center">
@@ -17,16 +17,15 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/CLI-T3--style-7C3AED?style=flat-square" alt="T3-style CLI" />
   <img src="https://img.shields.io/badge/pnpm-workspace-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm" />
-  <a href="https://github.com/alidanial7/django-style-guide"><img src="https://img.shields.io/badge/companion-django--style--guide-092E20?style=flat-square&logo=django&logoColor=white" alt="django-style-guide" /></a>
+  <img src="https://img.shields.io/badge/CLI-create--next--style--guide-111827?style=flat-square" alt="CLI" />
 </p>
 
 ---
 
-Frontend twin of [django-style-guide](https://github.com/alidanial7/django-style-guide): a **create-t3-app–style CLI** that scaffolds a lean Next.js app with conventions, agent rules, and docs baked in.
+Opinionated **Next.js** scaffold CLI: lean App Router layout, feature installers, agent rules, and docs that match what you enabled.
 
-> 🚧 **In progress** — styling (Tailwind/MUI) · shadcn · Zod/Yup · icons · Query · endpoints · tooling · Docker · CI. Auth / i18n next.
+> Toggle options at create time — unused files and rules are not left behind.
 
 ---
 
@@ -35,10 +34,9 @@ Frontend twin of [django-style-guide](https://github.com/alidanial7/django-style
 | | | |
 |:---:|:---|:---|
 | 🏗️ | **App-colocated layout** | Thin routes · `_components/` per route · shared `components/` + `lib/` |
-| 🎛️ | **T3-style installers** | Flip options later; unused files get pruned |
+| 🎛️ | **Feature installers** | Flip options; prune what you did not pick |
 | 🤖 | **Agent-ready** | Slim `AGENTS.md` + glob-scoped `.cursor/rules/` |
 | 📚 | **Docs that match the code** | Generated `docs/style-guide/` |
-| 🔗 | **Django-friendly** | Optional envelope client (wired next) for the companion API template |
 
 ---
 
@@ -57,7 +55,6 @@ Or without building:
 ```bash
 pnpm install
 pnpm --filter create-next-style-guide dev
-# → prompts, then scaffold into cwd
 ```
 
 ### After publish (planned)
@@ -68,7 +65,7 @@ pnpm create next-style-guide
 npx create-next-style-guide@latest
 ```
 
-### Non-interactive (CI / smoke)
+### Non-interactive
 
 ```bash
 node cli/dist/index.js SmokeApp --yes --no-install
@@ -81,9 +78,9 @@ node cli/dist/index.js SmokeApp --yes --no-install
 ```text
 my-app/
 ├── src/
-│   ├── app/                 # App Router (thin) + _components/
+│   ├── app/                 # App Router + _components/
 │   ├── components/          # shared UI (≥2 routes)
-│   ├── lib/                 # env (Zod) + http + cn
+│   ├── lib/                 # env + helpers
 │   ├── utils/ · providers/ · hooks/ · types/ · constants/
 ├── docs/style-guide/
 ├── AGENTS.md
@@ -91,24 +88,23 @@ my-app/
 └── …
 ```
 
-### 🎛️ Options
+### Options
 
-| | Flag | Status |
-|:---:|:---|:---|
-| 🎨 | Styling (`none` / `tailwind` / `mui`) | prompted |
-| 🧩 | shadcn/ui | prompted only if Tailwind (ignored for MUI) |
-| ✅ | Validation (`zod` / `yup`) | prompted · env + forms rules |
-| ✨ | Icons (`none` / `lucide` / `tabler`) | prompted |
-| 📡 | TanStack Query | prompted |
-| 🔌 | OpenAPI endpoints codegen | prompted (default on) |
-| 🧹 | Enhanced ESLint | prompted (default on) |
-| ✨ | Prettier | prompted (default on) |
-| 🐶 | Husky + lint-staged | prompted (default on) |
-| 🐳 | Docker standalone image | prompted (default off) |
-| 🤖 | GitHub Actions CI | prompted (default on) |
-| 🔑 | Auth / i18n / testing | stubbed |
+| | Choice |
+|:---:|:---|
+| 🎨 | Styling: `none` / `tailwind` / `mui` |
+| 🧩 | shadcn (Tailwind only) |
+| ✅ | Validation: `zod` / `yup` |
+| 🔑 | Auth: `none` / `jwt` / `authjs` |
+| ✨ | Icons: `none` / `lucide` / `tabler` |
+| 📡 | TanStack Query |
+| 🔌 | OpenAPI endpoints codegen |
+| 🔎 | SEO (public-routes, sitemap, robots) |
+| 🧹 | ESLint / Prettier / Husky |
+| 🐳 | Docker |
+| 🤖 | GitHub Actions CI |
 
-CLI: `--styling`, `--shadcn`, `--validation`, `--icons`, … (+ `--no-*`).
+Flags: `--styling`, `--shadcn`, `--validation`, `--auth`, `--seo`, `--icons`, … (+ `--no-*`).
 
 ---
 
@@ -116,11 +112,12 @@ CLI: `--styling`, `--shadcn`, `--validation`, `--icons`, … (+ `--no-*`).
 
 ```text
 next-style-guide/
-├── cli/                     # publishable create-next-style-guide
+├── cli/                     # create-next-style-guide
 │   ├── src/                 # prompts, scaffold, installers
-│   └── template/            # Next.js base copied into new apps
+│   ├── template/            # base app
+│   └── addons/              # optional feature packs
 ├── scripts/smoke.sh
-├── AGENTS.md                # contributors to THIS repo
+├── AGENTS.md
 └── VERSION
 ```
 
@@ -134,7 +131,7 @@ pnpm typecheck
 pnpm smoke          # needs ripgrep (rg)
 ```
 
-See [`AGENTS.md`](AGENTS.md) for installer / prune conventions.
+See [`AGENTS.md`](AGENTS.md).
 
 ---
 

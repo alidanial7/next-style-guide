@@ -6,4 +6,4 @@ Base helper: `src/lib/http.ts` → `apiFetch`.
 - Expects JSON
 - Throws on non-OK responses
 
-When the **django envelope** option is enabled (installer TBD), responses shaped like `{ result, errors, … }` will be unwrapped in `src/utils/` (axios / envelope helpers) so route UI never parses envelopes by hand.
+When **endpoints** / axios helpers are enabled, prefer generated clients and `unwrapApiResult` for `{ result, status, success, messages }` responses so route UI never parses envelopes by hand.

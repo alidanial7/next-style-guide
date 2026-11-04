@@ -1,4 +1,4 @@
-/** Mirror django-style-guide slug rules: lower, spaces/hyphens/dots → `_` */
+/** Lowercase slug: spaces / hyphens / dots → `_` */
 export function slugify(name: string): string {
   const slug = name
     .trim()

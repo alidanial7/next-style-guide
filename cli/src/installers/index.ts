@@ -1,3 +1,5 @@
+import { authAuthjsInstaller } from "./auth-authjs.js";
+import { authJwtInstaller } from "./auth-jwt.js";
 import { ciInstaller } from "./ci.js";
 import { dockerInstaller } from "./docker.js";
 import { endpointsInstaller } from "./endpoints.js";
@@ -6,6 +8,7 @@ import { huskyInstaller } from "./husky.js";
 import { iconsInstaller } from "./icons.js";
 import { muiInstaller } from "./mui.js";
 import { prettierInstaller } from "./prettier.js";
+import { seoInstaller } from "./seo.js";
 import { shadcnInstaller } from "./shadcn.js";
 import { surfaceInstaller } from "./surface.js";
 import { tailwindInstaller } from "./tailwind.js";
@@ -19,10 +22,13 @@ export const installers: Installer[] = [
   iconsInstaller,
   tanstackQueryInstaller,
   endpointsInstaller,
+  authJwtInstaller, // after endpoints — may replace axios-instance
+  authAuthjsInstaller,
   tailwindInstaller,
   muiInstaller,
-  shadcnInstaller, // after tailwind
+  shadcnInstaller,
   validationInstaller,
+  seoInstaller,
   eslintInstaller,
   prettierInstaller,
   huskyInstaller,

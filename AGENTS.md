@@ -1,13 +1,13 @@
-# Agents (next-style-guide template)
+# Agents (next-style-guide)
 
-This repo is a **T3-style CLI** that scaffolds Next.js apps. Generated app code lives under `cli/template/`. The publishable package is `cli/` (`create-next-style-guide`).
+This repo is a CLI that scaffolds Next.js apps. Generated app code lives under `cli/template/`. The publishable package is `cli/` (`create-next-style-guide`).
 
 ## Do
 
 - Keep option types in `cli/src/types.ts` in sync with prompts + installers.
 - Prefer discrete **installers** (add files/deps) over heavy string templating in TSX.
-- Prune unused files when a feature flag is off (mirror django-style-guide `post_gen`).
-- Keep generated agent surface slim: `AGENTS.md` + `.cursor/rules/*.mdc` (feature rules removed when option is off).
+- Prune unused files when a feature flag is off.
+- Keep generated agent surface slim: `AGENTS.md` + `.cursor/rules/*.mdc` (feature rules only when the option is on).
 - Run `pnpm smoke` after scaffold / installer changes.
 
 ## Don't

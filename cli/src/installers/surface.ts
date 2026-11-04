@@ -18,6 +18,8 @@ function stackLines(options: ScaffoldOptions): string[] {
   return [
     `Styling: ${stylingLabel}`,
     `Validation: ${options.validation}`,
+    `Auth: ${options.auth}`,
+    options.seo ? "SEO helpers (sitemap/robots)" : "No SEO helpers",
     options.data === "tanstack-query"
       ? "TanStack Query enabled"
       : "RSC / fetch (no TanStack Query)",
@@ -105,6 +107,15 @@ function docsIndex(options: ScaffoldOptions): string {
     ],
   ];
 
+  if (options.auth === "jwt") {
+    rows.push(["[JWT auth](auth/jwt.md)", "token-storage + Bearer refresh"]);
+  }
+  if (options.auth === "authjs") {
+    rows.push(["[Auth.js](auth/authjs.md)", "NextAuth stub"]);
+  }
+  if (options.seo) {
+    rows.push(["[SEO](seo/overview.md)", "public-routes · sitemap · robots"]);
+  }
   if (options.styling === "tailwind") {
     rows.push(["Tailwind", "See `.cursor/rules/tailwind.mdc`"]);
   }
