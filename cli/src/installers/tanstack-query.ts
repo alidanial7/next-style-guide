@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { addDependencies } from "../helpers/package-json.js";
+import { wrapLayoutMain } from "../helpers/wrap-layout.js";
 import type { Installer } from "./types.js";
 
 const PROVIDER = `"use client";
@@ -66,18 +67,12 @@ export const tanstackQueryInstaller: Installer = {
 
     const layoutPath = path.join(projectDir, "src", "app", "layout.tsx");
     let layout = await fs.readFile(layoutPath, "utf8");
-
-    if (!layout.includes("QueryProvider")) {
-      layout = layout.replace(
-        'import "./globals.css";\n',
-        'import "./globals.css";\n\nimport { QueryProvider } from "@/providers/query-provider";\n',
-      );
-      layout = layout.replace(
-        "<main>{children}</main>",
-        "<QueryProvider>\n          <main>{children}</main>\n        </QueryProvider>",
-      );
-      await fs.writeFile(layoutPath, layout, "utf8");
-    }
+    layout = wrapLayoutMain(layout, {
+      importStatement:
+        'import { QueryProvider } from "@/providers/query-provider";',
+      providerName: "QueryProvider",
+    });
+    await fs.writeFile(layoutPath, layout, "utf8");
 
     const ruleDir = path.join(projectDir, ".cursor", "rules");
     await fs.ensureDir(ruleDir);

@@ -12,16 +12,17 @@ Next.js App Router app generated with [next-style-guide](https://github.com/alid
 ## Stack
 
 - Next.js 16 · React 19 · TypeScript
-- Zod env validation
+- Env validation via Zod or Yup
 - App Router under `src/app/`
 - Route-colocated UI under `_components/` (folder-per-component)
+- Package manager: __PACKAGE_MANAGER__
 
 ## Setup
 
 ```bash
 cp .env.example .env
-pnpm install   # or npm install
-pnpm dev
+__PACKAGE_MANAGER__ install
+__PACKAGE_MANAGER__ dev
 ```
 
 App: [http://localhost:3000](http://localhost:3000)

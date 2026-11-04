@@ -2,47 +2,74 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { ADDONS_DIR } from "../constants.js";
+import {
+  ciInstallCommand,
+  getPackageManager,
+} from "../helpers/package-manager.js";
 import type { ScaffoldOptions } from "../types.js";
 import type { Installer } from "./types.js";
 
 function workflowYaml(options: ScaffoldOptions): string {
-  const steps: string[] = [
+  const pm = getPackageManager(options.packageManager);
+  const run = (script: string) => pm.runScript(script);
+
+  const setupSteps: string[] = [
     `      - name: Checkout
         uses: actions/checkout@v4
+`,
+  ];
 
-      - name: Setup pnpm
+  if (options.packageManager === "pnpm") {
+    setupSteps.push(`      - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
+`);
+  }
 
-      - name: Setup Node
+  if (options.packageManager === "yarn") {
+    setupSteps.push(`      - name: Enable Corepack
+        run: corepack enable
+`);
+  }
+
+  setupSteps.push(`      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: ${options.packageManager}
+`);
 
-      - name: Install
-        run: pnpm install --frozen-lockfile
+  const steps: string[] = [
+    ...setupSteps,
+    `      - name: Install
+        run: ${ciInstallCommand(options.packageManager)}
 
       - name: Typecheck
-        run: pnpm typecheck`,
+        run: ${run("typecheck")}`,
   ];
 
   if (options.eslint) {
     steps.push(`
       - name: Lint
-        run: pnpm lint`);
+        run: ${run("lint")}`);
   }
 
   if (options.prettier) {
     steps.push(`
       - name: Format check
-        run: pnpm format:check`);
+        run: ${run("format:check")}`);
+  }
+
+  if (options.testing) {
+    steps.push(`
+      - name: Test
+        run: ${run("test")}`);
   }
 
   steps.push(`
       - name: Build
-        run: pnpm build
+        run: ${run("build")}
         env:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           NEXT_PUBLIC_API_URL: http://localhost:8000`);

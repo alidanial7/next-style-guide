@@ -5,12 +5,14 @@ import { execSync } from "node:child_process";
 import color from "picocolors";
 
 import { TEMPLATE_DIR } from "./constants.js";
+import { getPackageManager } from "./helpers/package-manager.js";
 import { replaceTokensInTree } from "./helpers/replace-tokens.js";
 import { runInstallers } from "./installers/index.js";
 import type { ScaffoldOptions } from "./types.js";
 
 export async function scaffold(options: ScaffoldOptions): Promise<string> {
   const projectDir = path.resolve(process.cwd(), options.name);
+  const pm = getPackageManager(options.packageManager);
 
   if (await fs.pathExists(projectDir)) {
     const entries = await fs.readdir(projectDir);
@@ -40,18 +42,26 @@ export async function scaffold(options: ScaffoldOptions): Promise<string> {
   await replaceTokensInTree(projectDir, {
     __PROJECT_NAME__: options.name,
     __PROJECT_SLUG__: options.slug,
+    __PACKAGE_MANAGER__: pm.id,
   });
 
   spin.message("Running installers");
   const ran = await runInstallers({ projectDir, options });
 
   if (!options.noInstall) {
-    spin.message("Installing dependencies (pnpm)");
+    spin.message(`Installing dependencies (${pm.id})`);
     try {
-      execSync("pnpm install", { cwd: projectDir, stdio: "ignore" });
+      execSync(`${pm.id} ${pm.installArgs.join(" ")}`, {
+        cwd: projectDir,
+        stdio: "ignore",
+      });
     } catch {
-      spin.message("pnpm failed — trying npm");
-      execSync("npm install", { cwd: projectDir, stdio: "ignore" });
+      if (pm.id !== "npm") {
+        spin.message(`${pm.id} failed — trying npm`);
+        execSync("npm install", { cwd: projectDir, stdio: "ignore" });
+      } else {
+        throw new Error("npm install failed");
+      }
     }
   }
 

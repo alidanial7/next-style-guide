@@ -8,7 +8,8 @@ Stack-wide → here. Feature detail → `.cursor/rules/*.mdc` (glob-scoped — o
 
 ## Stack
 
-App Router · TS strict · Zod env (`src/lib/env.ts`) · pnpm. Optional: TanStack Query, OpenAPI `src/endpoints/*`, icons, Husky, Docker, CI — only what was enabled at scaffold.
+App Router · TS strict · Zod/Yup env (`src/lib/env.ts`) · __PACKAGE_MANAGER__.
+Optional features (Query, store, endpoints, i18n, SEO, tests, Docker, CI, …) exist only when enabled at scaffold.
 
 ## Do
 
@@ -16,7 +17,7 @@ App Router · TS strict · Zod env (`src/lib/env.ts`) · pnpm. Optional: TanStac
 - Route-only → `src/app/<route>/_components/<name>/index.tsx`.
 - Layout / home → `src/app/_components/<name>/`.
 - Shared (≥2 routes) → `src/components/` (`ui/` flat for shadcn).
-- Infra → `src/lib/`; API helpers → `src/utils/`; calls via `http` / `api` / generated endpoints — not ad-hoc `fetch` in UI.
+- Infra → `src/lib/`; API helpers → `src/utils/`; client state → `src/stores/` (when present).
 - Named exports `function Foo()`; default only for Next route files.
 - Prefer Server Components; `"use client"` only when needed.
 - Single `<main>` in root layout — never nest `<main>` in pages/components.

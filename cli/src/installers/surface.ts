@@ -16,17 +16,28 @@ function stackLines(options: ScaffoldOptions): string[] {
         : "Plain CSS";
 
   return [
+    `Package manager: ${options.packageManager}`,
     `Styling: ${stylingLabel}`,
     `Validation: ${options.validation}`,
     `Auth: ${options.auth}`,
+    options.store === "none"
+      ? "No client store"
+      : `Client store: ${options.store}`,
     options.seo ? "SEO helpers (sitemap/robots)" : "No SEO helpers",
     options.data === "tanstack-query"
       ? "TanStack Query enabled"
       : "RSC / fetch (no TanStack Query)",
     options.icons === "none" ? "No icon library" : `Icons: ${options.icons}`,
     options.endpoints
-      ? "OpenAPI endpoints codegen (`pnpm endpoints:generate`)"
+      ? `OpenAPI endpoints codegen (\`${options.packageManager} endpoints:generate\`)`
       : "No endpoints codegen",
+    options.apiEnvelope ? "API envelope unwrap" : "No envelope unwrap",
+    options.i18n ? "i18n (next-intl)" : "No i18n",
+    options.testing
+      ? options.playwright
+        ? "Vitest + Playwright"
+        : "Vitest"
+      : "No tests",
     options.eslint ? "Enhanced ESLint" : "Minimal ESLint",
     options.prettier ? "Prettier" : "No Prettier",
     options.husky ? "Husky + lint-staged" : "No git hooks",
@@ -113,8 +124,23 @@ function docsIndex(options: ScaffoldOptions): string {
   if (options.auth === "authjs") {
     rows.push(["[Auth.js](auth/authjs.md)", "NextAuth stub"]);
   }
+  if (options.store === "zustand") {
+    rows.push(["[Zustand](state/zustand.md)", "client store"]);
+  }
+  if (options.store === "redux") {
+    rows.push(["[Redux Toolkit](state/redux.md)", "client store"]);
+  }
   if (options.seo) {
     rows.push(["[SEO](seo/overview.md)", "public-routes · sitemap · robots"]);
+  }
+  if (options.i18n) {
+    rows.push(["[i18n](i18n/overview.md)", "next-intl"]);
+  }
+  if (options.apiEnvelope) {
+    rows.push(["[API envelope](http/envelope.md)", "unwrap result"]);
+  }
+  if (options.testing) {
+    rows.push(["[Testing](tooling/testing.md)", "Vitest"]);
   }
   if (options.styling === "tailwind") {
     rows.push(["Tailwind", "See `.cursor/rules/tailwind.mdc`"]);
@@ -128,7 +154,7 @@ function docsIndex(options: ScaffoldOptions): string {
   if (options.endpoints) {
     rows.push([
       "[OpenAPI endpoints](http/endpoints.md)",
-      "`pnpm endpoints:generate`",
+      `\`${options.packageManager} endpoints:generate\``,
     ]);
   }
   if (options.data === "tanstack-query") {

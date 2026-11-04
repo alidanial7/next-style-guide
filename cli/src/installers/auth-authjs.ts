@@ -5,14 +5,35 @@ import { addDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
 
 const AUTH_TS = `import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 
 /**
- * Auth.js (NextAuth) stub — configure providers for your app.
- * Docs: https://authjs.dev
+ * Auth.js — Credentials demo provider.
+ * Replace \`authorize\` with your API/DB lookup. Set \`AUTH_SECRET\` in env.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [],
+  providers: [
+    Credentials({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+        // Demo only — wire to your backend.
+        return {
+          id: "1",
+          email: String(credentials.email),
+          name: "Demo User",
+        };
+      },
+    }),
+  ],
   session: { strategy: "jwt" },
+  trustHost: true,
 });
 `;
 
@@ -29,9 +50,10 @@ alwaysApply: false
 
 # Auth.js
 
-- Config: \`src/lib/auth.ts\` — add providers here.
+- Config: \`src/lib/auth.ts\` (Credentials demo included — replace \`authorize\`).
 - Route handlers: \`src/app/api/auth/[...nextauth]/route.ts\`.
-- Prefer \`auth()\` in Server Components / Route Handlers; \`signIn\`/\`signOut\` on the client.
+- Env: \`AUTH_SECRET\` (required in production).
+- Prefer \`auth()\` in Server Components; \`signIn\` / \`signOut\` on the client.
 `;
 
 export const authAuthjsInstaller: Installer = {
@@ -44,7 +66,15 @@ export const authAuthjsInstaller: Installer = {
       "utf8",
     );
     await fs.outputFile(
-      path.join(projectDir, "src", "app", "api", "auth", "[...nextauth]", "route.ts"),
+      path.join(
+        projectDir,
+        "src",
+        "app",
+        "api",
+        "auth",
+        "[...nextauth]",
+        "route.ts",
+      ),
       ROUTE,
     );
     await fs.writeFile(
@@ -56,10 +86,20 @@ export const authAuthjsInstaller: Installer = {
       path.join(projectDir, "docs", "style-guide", "auth", "authjs.md"),
       `# Auth.js
 
-Stub at \`src/lib/auth.ts\` + \`src/app/api/auth/[...nextauth]/route.ts\`.
-Add providers and env secrets (\`AUTH_SECRET\`, provider keys) before production.
+- \`src/lib/auth.ts\` — Credentials demo provider (replace \`authorize\`)
+- \`src/app/api/auth/[...nextauth]/route.ts\`
+- Env: \`AUTH_SECRET\`
 `,
     );
+
+    const envPath = path.join(projectDir, ".env.example");
+    if (await fs.pathExists(envPath)) {
+      let env = await fs.readFile(envPath, "utf8");
+      if (!env.includes("AUTH_SECRET")) {
+        env += `\n# Auth.js — generate with: openssl rand -base64 32\nAUTH_SECRET=\n`;
+        await fs.writeFile(envPath, env, "utf8");
+      }
+    }
 
     await addDependencies(projectDir, {
       "next-auth": "^5.0.0-beta.25",

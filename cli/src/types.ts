@@ -10,16 +10,21 @@ export type UiOption = "none" | "shadcn";
 export type DataOption = "rsc" | "tanstack-query";
 export type IconOption = "none" | "lucide" | "tabler";
 export type ValidationOption = "zod" | "yup";
+/** Client global state — opt-in */
+export type StoreOption = "none" | "zustand" | "redux";
+export type PackageManager = "pnpm" | "npm" | "yarn";
 
 export type ScaffoldOptions = {
   /** Output directory / display name */
   name: string;
   /** package.json / folder slug */
   slug: string;
+  packageManager: PackageManager;
   auth: AuthOption;
   styling: StylingOption;
   ui: UiOption;
   data: DataOption;
+  store: StoreOption;
   icons: IconOption;
   validation: ValidationOption;
   i18n: boolean;
@@ -39,21 +44,27 @@ export type ScaffoldOptions = {
   docker: boolean;
   /** GitHub Actions CI */
   ci: boolean;
+  /** Vitest unit/component tests */
   testing: boolean;
+  /** Playwright e2e (requires testing) */
+  playwright: boolean;
   /** Skip dependency install after scaffold */
   noInstall: boolean;
 };
 
 export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
+  packageManager: "pnpm",
   auth: "none",
   styling: "none",
   ui: "none",
   data: "rsc",
+  store: "none",
   icons: "none",
   validation: "zod",
   i18n: false,
-  apiEnvelope: true,
-  endpoints: true,
+  /** Neutral base — enable via preset / flags when building an API client app */
+  apiEnvelope: false,
+  endpoints: false,
   seo: false,
   eslint: true,
   prettier: true,
@@ -61,6 +72,7 @@ export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
   docker: false,
   ci: true,
   testing: true,
+  playwright: false,
   noInstall: false,
 };
 
@@ -72,7 +84,21 @@ export const ICON_PACKAGES: Record<
   tabler: { name: "@tabler/icons-react", version: "^3.46.0" },
 };
 
-/** Enforce incompatible UI combinations. */
+/** Enforce incompatible combinations. */
+export function normalizeOptions<T extends ScaffoldOptions>(options: T): T {
+  let next = { ...options };
+
+  if (next.styling !== "tailwind" && next.ui === "shadcn") {
+    next = { ...next, ui: "none" };
+  }
+  if (next.playwright && !next.testing) {
+    next = { ...next, testing: true };
+  }
+
+  return next;
+}
+
+/** @deprecated use normalizeOptions */
 export function normalizeUiOptions<
   T extends Pick<ScaffoldOptions, "styling" | "ui">,
 >(options: T): T {

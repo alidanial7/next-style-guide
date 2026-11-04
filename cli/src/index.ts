@@ -3,15 +3,23 @@ import color from "picocolors";
 import path from "node:path";
 
 import { PKG_NAME, TITLE } from "./constants.js";
+import { getPackageManager } from "./helpers/package-manager.js";
 import { slugify } from "./helpers/slugify.js";
+import {
+  collectOptionWarnings,
+  PRESET_SEEDS,
+  type PresetId,
+} from "./presets.js";
 import { runPrompts } from "./prompts.js";
 import { scaffold } from "./scaffold.js";
 import {
   DEFAULT_OPTIONS,
-  normalizeUiOptions,
+  normalizeOptions,
   type AuthOption,
   type IconOption,
+  type PackageManager,
   type ScaffoldOptions,
+  type StoreOption,
   type StylingOption,
   type ValidationOption,
 } from "./types.js";
@@ -20,19 +28,34 @@ const ICON_VALUES = new Set<IconOption>(["none", "lucide", "tabler"]);
 const STYLING_VALUES = new Set<StylingOption>(["none", "tailwind", "mui"]);
 const VALIDATION_VALUES = new Set<ValidationOption>(["zod", "yup"]);
 const AUTH_VALUES = new Set<AuthOption>(["none", "jwt", "authjs"]);
+const STORE_VALUES = new Set<StoreOption>(["none", "zustand", "redux"]);
+const PM_VALUES = new Set<PackageManager>(["pnpm", "npm", "yarn"]);
+const PRESET_VALUES = new Set<PresetId>([
+  "custom",
+  "minimal",
+  "api-app",
+  "marketing",
+]);
 
 type FlagBag = {
   name?: string;
   noInstall: boolean;
   yes: boolean;
+  preset?: PresetId;
+  packageManager?: PackageManager;
   icons?: IconOption;
   styling?: StylingOption;
   shadcn?: boolean;
   validation?: ValidationOption;
   auth?: AuthOption;
+  store?: StoreOption;
   tanstackQuery?: boolean;
   endpoints?: boolean;
+  apiEnvelope?: boolean;
   seo?: boolean;
+  i18n?: boolean;
+  testing?: boolean;
+  playwright?: boolean;
   eslint?: boolean;
   prettier?: boolean;
   husky?: boolean;
@@ -48,6 +71,30 @@ function parseBoolFlag(
   if (arg === positive) return true;
   if (arg === negative) return false;
   return undefined;
+}
+
+function readChoice<T extends string>(
+  arg: string,
+  flag: string,
+  values: Set<T>,
+  args: string[],
+  i: number,
+): { value: T; nextIndex: number } | null {
+  if (arg.startsWith(`${flag}=`)) {
+    const value = arg.slice(flag.length + 1) as T;
+    if (!values.has(value)) {
+      throw new Error(`Invalid ${flag}=${value}.`);
+    }
+    return { value, nextIndex: i };
+  }
+  if (arg === flag) {
+    const value = args[i + 1] as T | undefined;
+    if (!value || !values.has(value)) {
+      throw new Error(`Invalid ${flag}.`);
+    }
+    return { value, nextIndex: i + 1 };
+  }
+  return null;
 }
 
 function parseArgs(argv: string[]): FlagBag {
@@ -70,125 +117,84 @@ function parseArgs(argv: string[]): FlagBag {
       process.exit(0);
     }
 
-    const tq = parseBoolFlag(arg, "--tanstack-query", "--no-tanstack-query");
-    if (tq !== undefined) {
-      out.tanstackQuery = tq;
-      continue;
+    const boolKeys = [
+      ["tanstackQuery", "--tanstack-query", "--no-tanstack-query"],
+      ["endpoints", "--endpoints", "--no-endpoints"],
+      ["apiEnvelope", "--api-envelope", "--no-api-envelope"],
+      ["seo", "--seo", "--no-seo"],
+      ["i18n", "--i18n", "--no-i18n"],
+      ["testing", "--testing", "--no-testing"],
+      ["playwright", "--playwright", "--no-playwright"],
+      ["eslint", "--eslint", "--no-eslint"],
+      ["prettier", "--prettier", "--no-prettier"],
+      ["husky", "--husky", "--no-husky"],
+      ["docker", "--docker", "--no-docker"],
+      ["ci", "--ci", "--no-ci"],
+      ["shadcn", "--shadcn", "--no-shadcn"],
+    ] as const;
+    let matched = false;
+    for (const [key, pos, neg] of boolKeys) {
+      const v = parseBoolFlag(arg, pos, neg);
+      if (v !== undefined) {
+        out[key] = v;
+        matched = true;
+        break;
+      }
     }
-    const ep = parseBoolFlag(arg, "--endpoints", "--no-endpoints");
-    if (ep !== undefined) {
-      out.endpoints = ep;
-      continue;
-    }
-    const seo = parseBoolFlag(arg, "--seo", "--no-seo");
-    if (seo !== undefined) {
-      out.seo = seo;
-      continue;
-    }
-    const es = parseBoolFlag(arg, "--eslint", "--no-eslint");
-    if (es !== undefined) {
-      out.eslint = es;
-      continue;
-    }
-    const pr = parseBoolFlag(arg, "--prettier", "--no-prettier");
-    if (pr !== undefined) {
-      out.prettier = pr;
-      continue;
-    }
-    const hk = parseBoolFlag(arg, "--husky", "--no-husky");
-    if (hk !== undefined) {
-      out.husky = hk;
-      continue;
-    }
-    const dk = parseBoolFlag(arg, "--docker", "--no-docker");
-    if (dk !== undefined) {
-      out.docker = dk;
-      continue;
-    }
-    const ci = parseBoolFlag(arg, "--ci", "--no-ci");
-    if (ci !== undefined) {
-      out.ci = ci;
-      continue;
-    }
-    const sc = parseBoolFlag(arg, "--shadcn", "--no-shadcn");
-    if (sc !== undefined) {
-      out.shadcn = sc;
-      continue;
-    }
+    if (matched) continue;
 
-    if (arg.startsWith("--styling=")) {
-      const value = arg.slice("--styling=".length) as StylingOption;
-      if (!STYLING_VALUES.has(value)) {
-        throw new Error(
-          `Invalid --styling=${value}. Use none | tailwind | mui.`,
-        );
-      }
-      out.styling = value;
+    const preset = readChoice(arg, "--preset", PRESET_VALUES, args, i);
+    if (preset) {
+      out.preset = preset.value;
+      i = preset.nextIndex;
       continue;
     }
-    if (arg === "--styling") {
-      const value = args[i + 1] as StylingOption | undefined;
-      if (!value || !STYLING_VALUES.has(value)) {
-        throw new Error(`Invalid --styling. Use none | tailwind | mui.`);
-      }
-      out.styling = value;
-      i += 1;
+    const pm = readChoice(arg, "--pm", PM_VALUES, args, i);
+    if (pm) {
+      out.packageManager = pm.value;
+      i = pm.nextIndex;
       continue;
     }
-
-    if (arg.startsWith("--validation=")) {
-      const value = arg.slice("--validation=".length) as ValidationOption;
-      if (!VALIDATION_VALUES.has(value)) {
-        throw new Error(`Invalid --validation=${value}. Use zod | yup.`);
-      }
-      out.validation = value;
+    const pmLong = readChoice(arg, "--package-manager", PM_VALUES, args, i);
+    if (pmLong) {
+      out.packageManager = pmLong.value;
+      i = pmLong.nextIndex;
       continue;
     }
-    if (arg === "--validation") {
-      const value = args[i + 1] as ValidationOption | undefined;
-      if (!value || !VALIDATION_VALUES.has(value)) {
-        throw new Error(`Invalid --validation. Use zod | yup.`);
-      }
-      out.validation = value;
-      i += 1;
+    const store = readChoice(arg, "--store", STORE_VALUES, args, i);
+    if (store) {
+      out.store = store.value;
+      i = store.nextIndex;
       continue;
     }
-
-    if (arg.startsWith("--auth=")) {
-      const value = arg.slice("--auth=".length) as AuthOption;
-      if (!AUTH_VALUES.has(value)) {
-        throw new Error(`Invalid --auth=${value}. Use none | jwt | authjs.`);
-      }
-      out.auth = value;
+    const styling = readChoice(arg, "--styling", STYLING_VALUES, args, i);
+    if (styling) {
+      out.styling = styling.value;
+      i = styling.nextIndex;
       continue;
     }
-    if (arg === "--auth") {
-      const value = args[i + 1] as AuthOption | undefined;
-      if (!value || !AUTH_VALUES.has(value)) {
-        throw new Error(`Invalid --auth. Use none | jwt | authjs.`);
-      }
-      out.auth = value;
-      i += 1;
+    const validation = readChoice(
+      arg,
+      "--validation",
+      VALIDATION_VALUES,
+      args,
+      i,
+    );
+    if (validation) {
+      out.validation = validation.value;
+      i = validation.nextIndex;
       continue;
     }
-
-    if (arg.startsWith("--icons=")) {
-      const value = arg.slice("--icons=".length) as IconOption;
-      if (!ICON_VALUES.has(value)) {
-        throw new Error(
-          `Invalid --icons=${value}. Use none | lucide | tabler.`,
-        );
-      }
-      out.icons = value;
+    const auth = readChoice(arg, "--auth", AUTH_VALUES, args, i);
+    if (auth) {
+      out.auth = auth.value;
+      i = auth.nextIndex;
       continue;
     }
-    if (arg === "--icons") {
-      const value = args[i + 1] as IconOption | undefined;
-      if (!value || !ICON_VALUES.has(value)) {
-        throw new Error(`Invalid --icons. Use none | lucide | tabler.`);
-      }
-      out.icons = value;
-      i += 1;
+    const icons = readChoice(arg, "--icons", ICON_VALUES, args, i);
+    if (icons) {
+      out.icons = icons.value;
+      i = icons.nextIndex;
       continue;
     }
 
@@ -205,26 +211,32 @@ function printHelp(): void {
 ${TITLE} — ${PKG_NAME}
 
 Usage:
-  pnpm create next-style-guide
   npx create-next-style-guide [name] [options]
 
 Options:
-  --yes, -y              Skip prompts (use defaults + other flags)
-  --no-install           Skip dependency install
-  --styling <name>       none | tailwind | mui
+  --yes, -y
+  --no-install
+  --preset minimal|api-app|marketing|custom
+  --pm, --package-manager pnpm|npm|yarn
+  --store none|zustand|redux
+  --styling none|tailwind|mui
   --shadcn | --no-shadcn
-  --validation <name>    zod | yup
-  --auth <name>          none | jwt | authjs
-  --icons <name>         none | lucide | tabler
+  --validation zod|yup
+  --auth none|jwt|authjs
+  --icons none|lucide|tabler
   --tanstack-query | --no-tanstack-query
   --endpoints | --no-endpoints
+  --api-envelope | --no-api-envelope
   --seo | --no-seo
+  --i18n | --no-i18n
+  --testing | --no-testing
+  --playwright | --no-playwright
   --eslint | --no-eslint
   --prettier | --no-prettier
   --husky | --no-husky
   --docker | --no-docker
   --ci | --no-ci
-  --help, -h             Show help
+  --help, -h
 `);
 }
 
@@ -233,23 +245,30 @@ function applyFlagOverrides(
   flags: FlagBag,
 ): ScaffoldOptions {
   let next = { ...options };
+  if (flags.packageManager !== undefined) {
+    next.packageManager = flags.packageManager;
+  }
   if (flags.icons !== undefined) next.icons = flags.icons;
   if (flags.styling !== undefined) next.styling = flags.styling;
   if (flags.shadcn !== undefined) next.ui = flags.shadcn ? "shadcn" : "none";
   if (flags.validation !== undefined) next.validation = flags.validation;
   if (flags.auth !== undefined) next.auth = flags.auth;
+  if (flags.store !== undefined) next.store = flags.store;
   if (flags.tanstackQuery !== undefined) {
     next.data = flags.tanstackQuery ? "tanstack-query" : "rsc";
   }
   if (flags.endpoints !== undefined) next.endpoints = flags.endpoints;
+  if (flags.apiEnvelope !== undefined) next.apiEnvelope = flags.apiEnvelope;
   if (flags.seo !== undefined) next.seo = flags.seo;
+  if (flags.i18n !== undefined) next.i18n = flags.i18n;
+  if (flags.testing !== undefined) next.testing = flags.testing;
+  if (flags.playwright !== undefined) next.playwright = flags.playwright;
   if (flags.eslint !== undefined) next.eslint = flags.eslint;
   if (flags.prettier !== undefined) next.prettier = flags.prettier;
   if (flags.husky !== undefined) next.husky = flags.husky;
   if (flags.docker !== undefined) next.docker = flags.docker;
   if (flags.ci !== undefined) next.ci = flags.ci;
-  next = normalizeUiOptions(next);
-  return next;
+  return normalizeOptions(next);
 }
 
 async function main(): Promise<void> {
@@ -259,11 +278,16 @@ async function main(): Promise<void> {
 
   if (flags.yes) {
     const name = (flags.name ?? "my-app").trim();
+    const presetSeed =
+      flags.preset && flags.preset !== "custom"
+        ? PRESET_SEEDS[flags.preset]
+        : DEFAULT_OPTIONS;
+
     options = applyFlagOverrides(
       {
         name,
         slug: slugify(name),
-        ...DEFAULT_OPTIONS,
+        ...presetSeed,
         noInstall: flags.noInstall,
       },
       flags,
@@ -272,11 +296,13 @@ async function main(): Promise<void> {
     p.log.info(
       [
         `Non-interactive: ${options.name} (${options.slug})`,
-        `styling=${options.styling} ui=${options.ui} validation=${options.validation} auth=${options.auth}`,
-        `icons=${options.icons} data=${options.data} seo=${options.seo}`,
-        `endpoints=${options.endpoints} eslint=${options.eslint} prettier=${options.prettier}`,
-        `husky=${options.husky} docker=${options.docker} ci=${options.ci}`,
-      ].join(" · "),
+        flags.preset ? `preset=${flags.preset}` : null,
+        `pm=${options.packageManager}`,
+        `styling=${options.styling} ui=${options.ui} auth=${options.auth} store=${options.store}`,
+        `endpoints=${options.endpoints} seo=${options.seo} i18n=${options.i18n} testing=${options.testing}`,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     );
   } else {
     options = await runPrompts(flags.name);
@@ -284,16 +310,23 @@ async function main(): Promise<void> {
     options = applyFlagOverrides(options, flags);
   }
 
+  const warnings = collectOptionWarnings(options);
+  for (const warning of warnings) {
+    p.log.warn(warning);
+  }
+
   const projectDir = await scaffold(options);
+  const pm = getPackageManager(options.packageManager);
 
   const nextSteps = [
     `cd ${path.relative(process.cwd(), projectDir) || "."}`,
-    options.noInstall ? "pnpm install" : null,
-    options.ui === "shadcn" ? "npx shadcn@latest add button   # example" : null,
+    options.noInstall ? `${pm.id} ${pm.installArgs.filter((a) => a !== "--ignore-workspace").join(" ")}`.trim() : null,
+    options.ui === "shadcn" ? "npx shadcn@latest add input   # optional" : null,
     options.endpoints
-      ? "pnpm endpoints:generate   # when API schema is up"
+      ? `${pm.runScript("endpoints:generate")}   # when API schema is up`
       : null,
-    "pnpm dev",
+    options.testing ? pm.runScript("test") : null,
+    pm.runScript("dev"),
   ].filter(Boolean);
 
   p.note(nextSteps.join("\n"), "Next steps");

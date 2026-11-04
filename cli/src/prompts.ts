@@ -4,11 +4,19 @@ import color from "picocolors";
 import { TITLE } from "./constants.js";
 import { slugify } from "./helpers/slugify.js";
 import {
+  collectOptionWarnings,
+  describePreset,
+  PRESET_SEEDS,
+  type PresetId,
+} from "./presets.js";
+import {
   DEFAULT_OPTIONS,
-  normalizeUiOptions,
+  normalizeOptions,
   type AuthOption,
   type IconOption,
+  type PackageManager,
   type ScaffoldOptions,
+  type StoreOption,
   type StylingOption,
   type ValidationOption,
 } from "./types.js";
@@ -19,6 +27,232 @@ function assertNotCancel<T>(value: T | symbol): T {
     process.exit(0);
   }
   return value;
+}
+
+async function promptCustomOptions(
+  base: Omit<ScaffoldOptions, "name" | "slug" | "noInstall">,
+): Promise<Omit<ScaffoldOptions, "name" | "slug" | "noInstall">> {
+  const styling = assertNotCancel(
+    await p.select({
+      message: "Styling system?",
+      options: [
+        { value: "none" satisfies StylingOption, label: "None", hint: "plain CSS" },
+        {
+          value: "tailwind" satisfies StylingOption,
+          label: "Tailwind CSS",
+          hint: "enables optional shadcn",
+        },
+        {
+          value: "mui" satisfies StylingOption,
+          label: "MUI",
+          hint: "no shadcn",
+        },
+      ],
+      initialValue: base.styling,
+    }),
+  );
+
+  let ui: ScaffoldOptions["ui"] = "none";
+  if (styling === "tailwind") {
+    const useShadcn = assertNotCancel(
+      await p.confirm({
+        message: "Add shadcn/ui?",
+        initialValue: base.ui === "shadcn",
+      }),
+    );
+    ui = useShadcn ? "shadcn" : "none";
+  }
+
+  const icons = assertNotCancel(
+    await p.select({
+      message: "Icon library?",
+      options: [
+        { value: "none" satisfies IconOption, label: "None" },
+        { value: "lucide" satisfies IconOption, label: "Lucide" },
+        { value: "tabler" satisfies IconOption, label: "Tabler" },
+      ],
+      initialValue: base.icons,
+    }),
+  );
+
+  const validation = assertNotCancel(
+    await p.select({
+      message: "Validation library?",
+      options: [
+        { value: "zod" satisfies ValidationOption, label: "Zod" },
+        { value: "yup" satisfies ValidationOption, label: "Yup" },
+      ],
+      initialValue: base.validation,
+    }),
+  );
+
+  const useTanstackQuery = assertNotCancel(
+    await p.confirm({
+      message: "Add TanStack Query?",
+      initialValue: base.data === "tanstack-query",
+    }),
+  );
+
+  const needsStore = assertNotCancel(
+    await p.confirm({
+      message: "Add a client store (global UI state)?",
+      initialValue: base.store !== "none",
+    }),
+  );
+
+  let store: StoreOption = "none";
+  if (needsStore) {
+    store = assertNotCancel(
+      await p.select({
+        message: "Which store library?",
+        options: [
+          {
+            value: "zustand" satisfies StoreOption,
+            label: "Zustand",
+            hint: "lightweight",
+          },
+          {
+            value: "redux" satisfies StoreOption,
+            label: "Redux Toolkit",
+            hint: "structured slices",
+          },
+        ],
+        initialValue: base.store === "redux" ? "redux" : "zustand",
+      }),
+    );
+  }
+
+  const endpoints = assertNotCancel(
+    await p.confirm({
+      message: "Add OpenAPI endpoints codegen?",
+      initialValue: base.endpoints,
+    }),
+  );
+
+  let apiEnvelope = base.apiEnvelope;
+  if (endpoints) {
+    apiEnvelope = assertNotCancel(
+      await p.confirm({
+        message: "Unwrap API envelopes in http/axios helpers?",
+        initialValue: true,
+      }),
+    );
+  } else {
+    apiEnvelope = assertNotCancel(
+      await p.confirm({
+        message: "Unwrap API envelopes in apiFetch (lib/http.ts)?",
+        initialValue: false,
+      }),
+    );
+  }
+
+  const auth = assertNotCancel(
+    await p.select({
+      message: "Auth?",
+      options: [
+        { value: "none" satisfies AuthOption, label: "None" },
+        {
+          value: "jwt" satisfies AuthOption,
+          label: "JWT",
+          hint: "Bearer + refresh",
+        },
+        {
+          value: "authjs" satisfies AuthOption,
+          label: "Auth.js",
+          hint: "Credentials demo",
+        },
+      ],
+      initialValue: base.auth,
+    }),
+  );
+
+  const seo = assertNotCancel(
+    await p.confirm({
+      message: "Add SEO helpers (sitemap/robots)?",
+      initialValue: base.seo,
+    }),
+  );
+
+  const i18n = assertNotCancel(
+    await p.confirm({
+      message: "Add i18n (next-intl)?",
+      initialValue: base.i18n,
+    }),
+  );
+
+  const testing = assertNotCancel(
+    await p.confirm({
+      message: "Add Vitest?",
+      initialValue: base.testing,
+    }),
+  );
+
+  let playwright = false;
+  if (testing) {
+    playwright = assertNotCancel(
+      await p.confirm({
+        message: "Also add Playwright e2e?",
+        initialValue: base.playwright,
+      }),
+    );
+  }
+
+  const eslint = assertNotCancel(
+    await p.confirm({
+      message: "Enhanced ESLint?",
+      initialValue: base.eslint,
+    }),
+  );
+
+  const prettier = assertNotCancel(
+    await p.confirm({
+      message: "Add Prettier?",
+      initialValue: base.prettier,
+    }),
+  );
+
+  const husky = assertNotCancel(
+    await p.confirm({
+      message: "Add Husky + lint-staged?",
+      initialValue: base.husky,
+    }),
+  );
+
+  const docker = assertNotCancel(
+    await p.confirm({
+      message: "Add Docker production image?",
+      initialValue: base.docker,
+    }),
+  );
+
+  const ci = assertNotCancel(
+    await p.confirm({
+      message: "Add GitHub Actions CI?",
+      initialValue: base.ci,
+    }),
+  );
+
+  return {
+    ...base,
+    styling,
+    ui,
+    icons,
+    validation,
+    data: useTanstackQuery ? "tanstack-query" : "rsc",
+    store,
+    endpoints,
+    apiEnvelope,
+    auth,
+    seo,
+    i18n,
+    testing,
+    playwright,
+    eslint,
+    prettier,
+    husky,
+    docker,
+    ci,
+  };
 }
 
 /** Interactive prompts for scaffold options. */
@@ -45,163 +279,79 @@ export async function runPrompts(
 
   const slug = slugify(name);
 
-  const styling = assertNotCancel(
+  const packageManager = assertNotCancel(
     await p.select({
-      message: "Styling system?",
+      message: "Package manager?",
+      options: [
+        { value: "pnpm" as const, label: "pnpm", hint: "default" },
+        { value: "npm" as const, label: "npm" },
+        { value: "yarn" as const, label: "yarn", hint: "classic" },
+      ],
+      initialValue: "pnpm" as const,
+    }),
+  ) as PackageManager;
+
+  const preset = assertNotCancel(
+    await p.select({
+      message: "Preset?",
       options: [
         {
-          value: "none" satisfies StylingOption,
-          label: "None",
-          hint: "plain CSS (base template)",
+          value: "minimal" as const,
+          label: "Minimal",
+          hint: describePreset("minimal"),
         },
         {
-          value: "tailwind" satisfies StylingOption,
-          label: "Tailwind CSS",
-          hint: "utilities · enables optional shadcn",
+          value: "api-app" as const,
+          label: "API app",
+          hint: describePreset("api-app"),
         },
         {
-          value: "mui" satisfies StylingOption,
-          label: "MUI",
-          hint: "Material UI — no shadcn",
+          value: "marketing" as const,
+          label: "Marketing / site",
+          hint: describePreset("marketing"),
+        },
+        {
+          value: "custom" as const,
+          label: "Custom",
+          hint: "answer every question",
         },
       ],
-      initialValue: DEFAULT_OPTIONS.styling,
+      initialValue: "custom" as const,
     }),
-  );
+  ) as PresetId;
 
-  let ui: ScaffoldOptions["ui"] = "none";
-  if (styling === "tailwind") {
-    const useShadcn = assertNotCancel(
+  let optionSeed: Omit<ScaffoldOptions, "name" | "slug" | "noInstall"> =
+    preset === "custom"
+      ? { ...DEFAULT_OPTIONS, packageManager }
+      : { ...PRESET_SEEDS[preset], packageManager };
+
+  if (preset === "custom") {
+    optionSeed = await promptCustomOptions(optionSeed);
+  } else {
+    p.note(describePreset(preset), `Preset: ${preset}`);
+    const tweak = assertNotCancel(
       await p.confirm({
-        message: "Add shadcn/ui?",
+        message: "Customize this preset further?",
         initialValue: false,
       }),
     );
-    ui = useShadcn ? "shadcn" : "none";
+    if (tweak) {
+      optionSeed = await promptCustomOptions(optionSeed);
+    }
   }
 
-  const icons = assertNotCancel(
-    await p.select({
-      message: "Icon library?",
-      options: [
-        {
-          value: "none" satisfies IconOption,
-          label: "None",
-          hint: ui === "shadcn" ? "shadcn will still add lucide" : "add later",
-        },
-        {
-          value: "lucide" satisfies IconOption,
-          label: "Lucide",
-          hint: "common with shadcn",
-        },
-        {
-          value: "tabler" satisfies IconOption,
-          label: "Tabler",
-          hint: "@tabler/icons-react — Icon* prefix",
-        },
-      ],
-      initialValue: DEFAULT_OPTIONS.icons,
-    }),
-  );
+  const draft = normalizeOptions({
+    name: name.trim(),
+    slug,
+    ...optionSeed,
+    packageManager,
+    noInstall: false,
+  });
 
-  const validation = assertNotCancel(
-    await p.select({
-      message: "Validation library?",
-      options: [
-        {
-          value: "zod" satisfies ValidationOption,
-          label: "Zod",
-          hint: "default · typed schemas",
-        },
-        {
-          value: "yup" satisfies ValidationOption,
-          label: "Yup",
-          hint: "schema builder · InferType",
-        },
-      ],
-      initialValue: DEFAULT_OPTIONS.validation,
-    }),
-  );
-
-  const useTanstackQuery = assertNotCancel(
-    await p.confirm({
-      message: "Add TanStack Query (React Query)?",
-      initialValue: DEFAULT_OPTIONS.data === "tanstack-query",
-    }),
-  );
-
-  const endpoints = assertNotCancel(
-    await p.confirm({
-      message: "Add OpenAPI endpoints codegen (`pnpm endpoints:generate`)?",
-      initialValue: DEFAULT_OPTIONS.endpoints,
-    }),
-  );
-
-  const auth = assertNotCancel(
-    await p.select({
-      message: "Auth?",
-      options: [
-        {
-          value: "none" satisfies AuthOption,
-          label: "None",
-          hint: "add later",
-        },
-        {
-          value: "jwt" satisfies AuthOption,
-          label: "JWT",
-          hint: "Bearer + refresh · token-storage",
-        },
-        {
-          value: "authjs" satisfies AuthOption,
-          label: "Auth.js",
-          hint: "NextAuth stub",
-        },
-      ],
-      initialValue: DEFAULT_OPTIONS.auth,
-    }),
-  );
-
-  const seo = assertNotCancel(
-    await p.confirm({
-      message: "Add SEO helpers (public-routes, sitemap, robots)?",
-      initialValue: DEFAULT_OPTIONS.seo,
-    }),
-  );
-
-  const eslint = assertNotCancel(
-    await p.confirm({
-      message: "Enhanced ESLint (import sort, func-style, jsx-sort-props)?",
-      initialValue: DEFAULT_OPTIONS.eslint,
-    }),
-  );
-
-  const prettier = assertNotCancel(
-    await p.confirm({
-      message: "Add Prettier?",
-      initialValue: DEFAULT_OPTIONS.prettier,
-    }),
-  );
-
-  const husky = assertNotCancel(
-    await p.confirm({
-      message: "Add Husky + lint-staged (pre-commit)?",
-      initialValue: DEFAULT_OPTIONS.husky,
-    }),
-  );
-
-  const docker = assertNotCancel(
-    await p.confirm({
-      message: "Add Docker production image (standalone Next)?",
-      initialValue: DEFAULT_OPTIONS.docker,
-    }),
-  );
-
-  const ci = assertNotCancel(
-    await p.confirm({
-      message: "Add GitHub Actions CI?",
-      initialValue: DEFAULT_OPTIONS.ci,
-    }),
-  );
+  const warnings = collectOptionWarnings(draft);
+  if (warnings.length) {
+    p.log.warn(warnings.join("\n"));
+  }
 
   const confirmed = assertNotCancel(
     await p.confirm({
@@ -215,22 +365,5 @@ export async function runPrompts(
     process.exit(0);
   }
 
-  return normalizeUiOptions({
-    name: name.trim(),
-    slug,
-    ...DEFAULT_OPTIONS,
-    styling,
-    ui,
-    icons,
-    validation,
-    data: useTanstackQuery ? ("tanstack-query" as const) : ("rsc" as const),
-    endpoints,
-    auth,
-    seo,
-    eslint,
-    prettier,
-    husky,
-    docker,
-    ci,
-  });
+  return draft;
 }

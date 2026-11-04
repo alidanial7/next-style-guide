@@ -69,7 +69,17 @@ npx create-next-style-guide@latest
 
 ```bash
 node cli/dist/index.js SmokeApp --yes --no-install
+node cli/dist/index.js ApiApp --yes --preset api-app --no-install
 ```
+
+### Presets
+
+| Preset | Focus |
+|:---|:---|
+| `minimal` | Base App Router only |
+| `api-app` | Tailwind · shadcn · JWT · Query · endpoints · Vitest · CI |
+| `marketing` | Tailwind · shadcn · SEO · i18n · Vitest · CI |
+| `custom` | Answer every prompt (default in interactive mode) |
 
 ---
 
@@ -92,19 +102,27 @@ my-app/
 
 | | Choice |
 |:---:|:---|
+| 🎛️ | Preset: `minimal` / `api-app` / `marketing` / `custom` |
+| 📦 | Package manager: `pnpm` / `npm` / `yarn` |
 | 🎨 | Styling: `none` / `tailwind` / `mui` |
 | 🧩 | shadcn (Tailwind only) |
 | ✅ | Validation: `zod` / `yup` |
 | 🔑 | Auth: `none` / `jwt` / `authjs` |
+| 🗃️ | Client store: `none` / `zustand` / `redux` |
 | ✨ | Icons: `none` / `lucide` / `tabler` |
 | 📡 | TanStack Query |
 | 🔌 | OpenAPI endpoints codegen |
+| 📨 | API envelope unwrap |
 | 🔎 | SEO (public-routes, sitemap, robots) |
+| 🌐 | i18n (next-intl) |
+| 🧪 | Vitest (+ optional Playwright) |
 | 🧹 | ESLint / Prettier / Husky |
 | 🐳 | Docker |
 | 🤖 | GitHub Actions CI |
 
-Flags: `--styling`, `--shadcn`, `--validation`, `--auth`, `--seo`, `--icons`, … (+ `--no-*`).
+Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--icons`, … (+ `--no-*`).
+
+Default scaffold is a **neutral base** (no endpoints/envelope/store). Use `--preset api-app` or `--preset marketing` for common stacks.
 
 ---
 
