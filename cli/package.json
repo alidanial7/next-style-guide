@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "create-next-style-guide": "./dist/index.js"
+    "create-next-style-guide": "dist/index.js"
   },
   "files": [
     "dist",

@@ -38,6 +38,13 @@ export async function scaffold(options: ScaffoldOptions): Promise<string> {
     },
   });
 
+  // npm never packs `.gitignore`; template ships as `gitignore` and we rename here.
+  const gitignoreSrc = path.join(projectDir, "gitignore");
+  const gitignoreDest = path.join(projectDir, ".gitignore");
+  if (await fs.pathExists(gitignoreSrc)) {
+    await fs.move(gitignoreSrc, gitignoreDest, { overwrite: true });
+  }
+
   spin.message("Applying project tokens");
   await replaceTokensInTree(projectDir, {
     __PROJECT_NAME__: options.name,
