@@ -146,10 +146,30 @@ next-style-guide/
 ```bash
 pnpm install
 pnpm typecheck
-pnpm smoke          # needs ripgrep (rg)
+pnpm smoke          # uses rg if available, else grep
 ```
 
 See [`AGENTS.md`](AGENTS.md).
+
+---
+
+## 🚢 Release (npm via GitHub Actions)
+
+Pushing a version tag publishes `create-next-style-guide` to npm.
+
+1. **Secret once:** GitHub repo → Settings → Secrets and variables → Actions → `NPM_TOKEN`  
+   Create a [granular npm token](https://www.npmjs.com/settings/~/tokens) with **Read and write** + **Bypass 2FA** for publish.
+2. Commit your changes on `main`.
+3. Tag and push (example `0.1.1`):
+
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+Workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) runs typecheck + smoke, syncs `cli/package.json` / `VERSION` from the tag, then `npm publish --access public`.
+
+Tag format: `v` + semver (`v0.1.1`, `v1.0.0-beta.1`, …).
 
 ---
 

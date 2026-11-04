@@ -22,6 +22,17 @@ cd "$OUT"
 pass=0
 fail=0
 
+# Prefer ripgrep; fall back to grep -F so smoke works without rg installed.
+file_contains() {
+  local pattern="$1"
+  local path="$2"
+  if command -v rg >/dev/null 2>&1; then
+    rg -F -q "$pattern" "$path"
+  else
+    grep -F -q "$pattern" "$path"
+  fi
+}
+
 assert_file() {
   local path="$1"
   if [[ -e "$path" ]]; then
@@ -47,7 +58,7 @@ assert_missing() {
 assert_grep() {
   local pattern="$1"
   local path="$2"
-  if rg -F -q "$pattern" "$path"; then
+  if file_contains "$pattern" "$path"; then
     echo "  OK  '$pattern' in $path"
     pass=$((pass + 1))
   else
@@ -59,7 +70,7 @@ assert_grep() {
 assert_not_grep() {
   local pattern="$1"
   local path="$2"
-  if rg -F -q "$pattern" "$path"; then
+  if file_contains "$pattern" "$path"; then
     echo "  FAIL '$pattern' should not appear in $path"
     fail=$((fail + 1))
   else
@@ -79,6 +90,8 @@ node "$ROOT/cli/dist/index.js" "$NAME" --yes --no-install
 APP="$OUT/$NAME"
 
 assert_file "$APP/package.json"
+assert_file "$APP/.gitignore"
+assert_missing "$APP/gitignore"
 assert_grep '"next": "16.4.5"' "$APP/package.json"
 assert_grep "zod" "$APP/package.json"
 assert_grep '"packageManager": "pnpm@9.15.0"' "$APP/package.json"
