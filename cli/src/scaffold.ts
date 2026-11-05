@@ -7,6 +7,10 @@ import color from "picocolors";
 import { TEMPLATE_DIR } from "./constants.js";
 import { getPackageManager } from "./helpers/package-manager.js";
 import {
+  assertDirScaffoldable,
+  resolveProjectTarget,
+} from "./helpers/project-target.js";
+import {
   runPackageInstall,
   yieldUi,
 } from "./helpers/run-package-install.js";
@@ -15,20 +19,19 @@ import { runInstallers } from "./installers/index.js";
 import type { ScaffoldOptions } from "./types.js";
 
 export async function scaffold(options: ScaffoldOptions): Promise<string> {
-  const projectDir = path.resolve(process.cwd(), options.name);
+  const projectDir =
+    options.outDir ??
+    resolveProjectTarget(options.name).outDir;
   const pm = getPackageManager(options.packageManager);
 
-  if (await fs.pathExists(projectDir)) {
-    const entries = await fs.readdir(projectDir);
-    if (entries.length > 0) {
-      throw new Error(
-        `Target directory already exists and is not empty: ${projectDir}`,
-      );
-    }
-  }
+  await assertDirScaffoldable(projectDir);
 
   const spin = p.spinner();
-  spin.start("Copying template");
+  spin.start(
+    projectDir === path.resolve(process.cwd())
+      ? "Copying template into current directory"
+      : "Copying template",
+  );
   await yieldUi();
 
   if (!(await fs.pathExists(TEMPLATE_DIR))) {
@@ -36,6 +39,7 @@ export async function scaffold(options: ScaffoldOptions): Promise<string> {
     throw new Error(`Template directory not found at ${TEMPLATE_DIR}`);
   }
 
+  await fs.ensureDir(projectDir);
   await fs.copy(TEMPLATE_DIR, projectDir, {
     filter: (src) => {
       const base = path.basename(src);

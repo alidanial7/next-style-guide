@@ -316,6 +316,20 @@ assert_not_grep "axios" "$MIN/package.json"
 assert_grep "No tests" "$MIN/src/app/_components/welcome-card/index.tsx"
 assert_grep "No client store" "$MIN/src/app/_components/welcome-card/index.tsx"
 
+echo "==> Scaffold in-place with ."
+DOT_DIR="$OUT/smoke_inplace"
+mkdir -p "$DOT_DIR"
+# ignorable pre-existing files should be allowed
+echo "# scratch" > "$DOT_DIR/README.md"
+mkdir -p "$DOT_DIR/.git"
+cd "$DOT_DIR"
+node "$ROOT/cli/dist/index.js" . --yes --no-install --preset minimal \
+  --no-eslint --no-prettier --no-husky --no-ci --no-testing
+assert_file "$DOT_DIR/package.json"
+assert_file "$DOT_DIR/src/app/page.tsx"
+assert_grep '"name": "smoke_inplace"' "$DOT_DIR/package.json"
+assert_grep "smoke_inplace" "$DOT_DIR/src/app/page.tsx"
+
 echo "==> Upgrade --diff on minimal app"
 cd "$MIN"
 if node "$ROOT/cli/dist/index.js" upgrade --diff . >/tmp/nsg-upgrade.txt 2>&1; then

@@ -19,10 +19,15 @@ export type PackageManager = "pnpm" | "npm" | "yarn";
 export type DeployOption = "none" | "vercel" | "docker";
 
 export type ScaffoldOptions = {
-  /** Output directory / display name */
+  /** Display name (UI / tokens). When scaffolding with `.`, this is the cwd basename. */
   name: string;
   /** package.json / folder slug */
   slug: string;
+  /**
+   * Absolute output directory. Set by the CLI from the user target
+   * (`my-app` or `.`). Falls back to `resolve(cwd, name)` if omitted.
+   */
+  outDir?: string;
   packageManager: PackageManager;
   auth: AuthOption;
   styling: StylingOption;

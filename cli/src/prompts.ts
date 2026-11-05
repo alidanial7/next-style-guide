@@ -2,7 +2,7 @@ import * as p from "@clack/prompts";
 import color from "picocolors";
 
 import { TITLE } from "./constants.js";
-import { slugify } from "./helpers/slugify.js";
+import { resolveProjectTarget } from "./helpers/project-target.js";
 import {
   collectOptionWarnings,
   describePreset,
@@ -310,16 +310,16 @@ export async function runPrompts(
 ): Promise<ScaffoldOptions> {
   p.intro(color.bgCyan(color.black(` ${TITLE} `)));
 
-  const name = assertNotCancel(
+  const rawName = assertNotCancel(
     await p.text({
-      message: "Project name?",
+      message: "Project name? (use . for current directory)",
       placeholder: "my-app",
       initialValue: initialName ?? "my-app",
       validate(value) {
         const next = value ?? "";
         if (!next.trim()) return "Name is required.";
         try {
-          slugify(next);
+          resolveProjectTarget(next);
         } catch (error) {
           return error instanceof Error ? error.message : "Invalid name.";
         }
@@ -327,7 +327,11 @@ export async function runPrompts(
     }),
   );
 
-  const slug = slugify(name);
+  const target = resolveProjectTarget(rawName);
+  const { name, slug, outDir } = target;
+  if (target.inPlace) {
+    p.log.info(`Scaffolding into current directory → ${outDir}`);
+  }
 
   const packageManager = assertNotCancel(
     await p.select({
@@ -398,6 +402,7 @@ export async function runPrompts(
   const draft = normalizeOptions({
     name: name.trim(),
     slug,
+    outDir,
     ...optionSeed,
     packageManager,
     noInstall: false,
@@ -410,7 +415,9 @@ export async function runPrompts(
 
   const confirmed = assertNotCancel(
     await p.confirm({
-      message: `Create ${color.cyan(name)} (${color.dim(slug)})?`,
+      message: target.inPlace
+        ? `Create ${color.cyan(name)} (${color.dim(slug)}) in ${color.dim(".")}?`
+        : `Create ${color.cyan(name)} (${color.dim(slug)})?`,
       initialValue: true,
     }),
   );
