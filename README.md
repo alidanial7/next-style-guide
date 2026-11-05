@@ -54,6 +54,10 @@ Interactive prompts, or skip with a preset:
 npx create-next-style-guide@latest my-app --yes --preset api-app
 npx create-next-style-guide@latest shop --yes --preset marketing
 npx create-next-style-guide@latest admin --yes --preset dashboard
+
+# into the current directory (empty / only .git · README · LICENSE …)
+mkdir my-app && cd my-app
+npx create-next-style-guide@latest . --yes --preset minimal
 ```
 
 ### Presets

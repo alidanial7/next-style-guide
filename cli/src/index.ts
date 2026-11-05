@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { PKG_NAME, TITLE } from "./constants.js";
 import { getPackageManager } from "./helpers/package-manager.js";
-import { slugify } from "./helpers/slugify.js";
+import { resolveProjectTarget } from "./helpers/project-target.js";
 import {
   collectOptionWarnings,
   PRESET_SEEDS,
@@ -270,6 +270,7 @@ ${TITLE} — ${PKG_NAME}
 
 Usage:
   npx create-next-style-guide [name] [options]
+  npx create-next-style-guide . [options]          # scaffold into current directory
   npx create-next-style-guide upgrade [--apply] [dir]
   npx create-next-style-guide --diff [dir]
 
@@ -356,7 +357,7 @@ async function main(): Promise<void> {
   let options: ScaffoldOptions;
 
   if (flags.yes) {
-    const name = (flags.name ?? "my-app").trim();
+    const target = resolveProjectTarget(flags.name ?? "my-app");
     const presetSeed =
       flags.preset && flags.preset !== "custom"
         ? PRESET_SEEDS[flags.preset]
@@ -364,8 +365,9 @@ async function main(): Promise<void> {
 
     options = applyFlagOverrides(
       {
-        name,
-        slug: slugify(name),
+        name: target.name,
+        slug: target.slug,
+        outDir: target.outDir,
         ...presetSeed,
         noInstall: flags.noInstall,
       },
@@ -375,6 +377,7 @@ async function main(): Promise<void> {
     p.log.info(
       [
         `Non-interactive: ${options.name} (${options.slug})`,
+        target.inPlace ? `out=. (${target.outDir})` : null,
         flags.preset ? `preset=${flags.preset}` : null,
         `pm=${options.packageManager}`,
         `styling=${options.styling} ui=${options.ui}${options.ui === "shadcn" ? `:${options.shadcnSet}` : ""} auth=${options.auth} store=${options.store}`,
