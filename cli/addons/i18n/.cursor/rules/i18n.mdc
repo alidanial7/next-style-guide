@@ -1,6 +1,6 @@
 ---
 description: next-intl i18n conventions (v4 + locale routing)
-globs: src/i18n/**,messages/**,src/middleware.ts,src/app/[locale]/**,src/app/_components/locale-switcher/**,src/providers/app-providers.tsx,next.config.ts
+globs: src/i18n/**,messages/**,src/proxy.ts,src/app/[locale]/**,src/app/_components/locale-switcher/**,src/providers/app-providers.tsx,next.config.ts
 alwaysApply: false
 ---
 
@@ -11,9 +11,9 @@ alwaysApply: false
 | Piece | Path |
 |-------|------|
 | Locales | `en` · `fa` in `src/i18n/routing.ts` (`defineRouting`) |
-| Request | `src/i18n/request.ts` (plugin `./src/i18n/request.ts`) |
+| Request | `src/i18n/request.ts` (plugin `./src/i18n/request.ts`; includes `timeZone`) |
 | Navigation | `src/i18n/navigation.ts` |
-| Middleware | `src/middleware.ts` |
+| Proxy | `src/proxy.ts` (Next.js 16+; next-intl `createMiddleware`) |
 | Messages | `messages/<locale>.json` |
 | App routes | `src/app/[locale]/…` |
 | Sample switcher | `src/app/_components/locale-switcher/` (homepage only) |
@@ -25,12 +25,14 @@ alwaysApply: false
 - New pages/layouts go under `src/app/[locale]/` (not `src/app/` root).
 - Homepage samples stay in `src/app/_components/` (shared across locales) — never park them in `src/components/`.
 - Keep `api/`, `globals.css`, sitemap/robots at `src/app/` root.
-- Locale layout: `hasLocale` → `setRequestLocale` → `getMessages` → pass `locale` + `messages` into client `AppProviders` (`NextIntlClientProvider` does not inherit when nested under a Client Component).
+- Locale layout: `hasLocale` → `setRequestLocale` → `getMessages` + `getTimeZone` → pass `locale` + `messages` + `timeZone` into client `AppProviders` (`NextIntlClientProvider` does not inherit when nested under a Client Component).
+- Keep a global `timeZone` in `src/i18n/request.ts` (default `UTC`) to avoid `ENVIRONMENT_FALLBACK` mismatches.
 - Add a locale: extend `routing.locales` + add `messages/<locale>.json`.
 - Keep `next-intl@^4.5` — v3 injects `experimental.turbo` which Next.js 16 rejects.
 
 ## Don't
 
-- Put localized routes beside `[locale]` at `src/app/<page>` (middleware expects the locale prefix).
+- Put localized routes beside `[locale]` at `src/app/<page>` (proxy expects the locale prefix).
 - Hardcode `/en/...` paths in links — use navigation helpers so locale switches stay correct.
-- Rely on server→client message inheritance without passing props into `AppProviders`.
+- Rely on server→client message/timeZone inheritance without passing props into `AppProviders`.
+- Use the deprecated `src/middleware.ts` file convention — Next.js 16 expects `src/proxy.ts`.

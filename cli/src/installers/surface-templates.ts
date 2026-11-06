@@ -18,7 +18,7 @@ export function stackLines(options: ScaffoldOptions): string[] {
     options.store === "none"
       ? "No client store"
       : `Client store: ${options.store}`,
-    options.darkMode ? "Dark mode (next-themes)" : "No dark mode",
+    options.darkMode ? "Dark mode (ThemeProvider)" : "No dark mode",
     options.direction === "both"
       ? "Direction: both (runtime toggle)"
       : `Direction: ${options.direction}`,
@@ -243,7 +243,7 @@ export function docsIndex(options: ScaffoldOptions): string {
     rows.push(["[Redux Toolkit](state/redux.md)", "client store"]);
   }
   if (options.darkMode) {
-    rows.push(["[Dark mode](ui/dark-mode.md)", "next-themes"]);
+    rows.push(["[Dark mode](ui/dark-mode.md)", "ThemeProvider"]);
   }
   rows.push([
     "[Direction](ui/direction.md)",

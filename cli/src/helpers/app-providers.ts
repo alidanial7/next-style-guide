@@ -25,9 +25,10 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
 
   if (options.i18n) {
     imports.push(`import { NextIntlClientProvider } from "next-intl";`);
-    // Required: AppProviders is a Client Component — locale is NOT inferred.
+    // Required: AppProviders is a Client Component — locale / timeZone are NOT inherited.
     props.push(`locale: string`);
     props.push(`messages: Record<string, unknown>`);
+    props.push(`timeZone: string`);
   }
   if (options.direction === "both") {
     imports.push(
@@ -52,7 +53,7 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
 
   if (options.i18n) {
     openers.push(
-      `    <NextIntlClientProvider locale={locale} messages={messages}>`,
+      `    <NextIntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>`,
     );
     closers.unshift(`    </NextIntlClientProvider>`);
   }
@@ -78,7 +79,7 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
   }
 
   const destructure = options.i18n
-    ? "{ children, locale, messages }"
+    ? "{ children, locale, messages, timeZone }"
     : "{ children }";
 
   return `${imports.join("\n")}

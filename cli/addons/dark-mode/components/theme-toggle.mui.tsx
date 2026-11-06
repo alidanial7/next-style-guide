@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/providers/theme-provider";
 
 /** Sample control — swap for your chrome; light / dark / system when darkMode is on. */
 export function ThemeToggle() {

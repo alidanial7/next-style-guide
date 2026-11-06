@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/providers/theme-provider";
 import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
 

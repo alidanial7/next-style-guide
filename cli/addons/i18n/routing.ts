@@ -1,7 +1,7 @@
 import { defineRouting } from "next-intl/routing";
 
 /**
- * Shared locale routing — used by middleware, navigation helpers, and request config.
+ * Shared locale routing — used by proxy, navigation helpers, and request config.
  * Add locales here, then drop matching `messages/<locale>.json` files.
  */
 export const routing = defineRouting({

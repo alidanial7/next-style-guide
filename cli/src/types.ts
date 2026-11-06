@@ -45,7 +45,7 @@ export type ScaffoldOptions = {
   i18n: boolean;
   /** ltr · rtl · both (runtime toggle + sample UI when both) */
   direction: DirectionOption;
-  /** Dark mode via next-themes (requires styling=tailwind | mui) */
+  /** Dark mode via ThemeProvider + FOUC script (requires styling=tailwind | mui) */
   darkMode: boolean;
   /** Unwrap `{ result, status, success, messages }` API envelopes */
   apiEnvelope: boolean;

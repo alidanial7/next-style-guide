@@ -99,7 +99,7 @@ my-app/
 | ✅ | Validation: `none` / `zod` / `yup` |
 | 🔑 | Auth: `none` / `jwt` / `authjs` |
 | 🗃️ | Client store: `none` / `zustand` / `redux` |
-| 🌙 | Dark mode (next-themes; Tailwind \`dark:\` or MUI palette) |
+| 🌙 | Dark mode (ThemeProvider; Tailwind \`dark:\` or MUI palette) |
 | ↔️ | Direction: `ltr` / `rtl` / `both` (hook `useDirection` · sample toggle when both) |
 | ✨ | Icons: `none` / `lucide` / `tabler` (shadcn forces lucide unless tabler) |
 | 📡 | TanStack Query |

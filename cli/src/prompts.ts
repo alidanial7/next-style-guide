@@ -93,8 +93,8 @@ async function promptCustomOptions(
       await p.confirm({
         message:
           styling === "mui"
-            ? "Add dark mode (next-themes ↔ MUI palette)?"
-            : "Add dark mode (next-themes)?",
+            ? "Add dark mode (ThemeProvider ↔ MUI palette)?"
+            : "Add dark mode (ThemeProvider + Tailwind dark:)?",
         initialValue: base.darkMode,
       }),
     );

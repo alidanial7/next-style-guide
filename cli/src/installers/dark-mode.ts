@@ -2,40 +2,27 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { copyAddonFile } from "../helpers/addon-files.js";
-import { addDependencies } from "../helpers/package-json.js";
+import { removeDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
-
-const THEME_PROVIDER = `"use client";
-
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import type { ReactNode } from "react";
-
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  return (
-    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-      {children}
-    </NextThemesProvider>
-  );
-}
-`;
 
 function ruleFor(styling: "tailwind" | "mui"): string {
   const extra =
     styling === "mui"
-      ? "- MUI: \`MuiProvider\` reads \`resolvedTheme\` and swaps palette via \`getPalette\`."
-      : "- Tailwind: use \`dark:\` variants; \`html\` gets \`class=\"dark\"\` from next-themes.";
+      ? "- MUI: `MuiProvider` reads `resolvedTheme` and swaps palette via `getPalette`."
+      : "- Tailwind: use `dark:` variants; `html` gets `class=\"dark\"` from the theme provider.";
   return `---
-description: Dark mode (next-themes)
-globs: src/providers/theme-provider.tsx,src/providers/mui-provider.tsx,src/app/globals.css,src/app/_components/theme-toggle/**
+description: Dark mode (class on html)
+globs: src/providers/theme-provider.tsx,src/lib/theme-init-script.ts,src/providers/mui-provider.tsx,src/app/globals.css,src/app/_components/theme-toggle/**
 alwaysApply: false
 ---
 
 # Dark mode
 
-- \`ThemeProvider\` in \`src/providers/theme-provider.tsx\` (composed via \`AppProviders\`).
+- \`ThemeProvider\` + \`useTheme\` in \`src/providers/theme-provider.tsx\` (composed via \`AppProviders\`).
+- FOUC script: \`src/lib/theme-init-script.ts\` injected from the Server Component layout (not a Client Component \`<script>\` — avoids React 19 warnings).
 - Homepage sample \`ThemeToggle\` under \`src/app/_components/theme-toggle/\` (not shared \`components/\`).
 ${extra}
-- Prefer \`defaultTheme="system"\`.
+- Prefer default theme \`system\` (localStorage key \`theme\`).
 `;
 }
 
@@ -61,24 +48,32 @@ export const darkModeInstaller: Installer = {
       "_components",
       "theme-toggle",
     );
+    const themeInitPath = path.join(
+      projectDir,
+      "src",
+      "lib",
+      "theme-init-script.ts",
+    );
 
     if (!darkModeEnabled(options)) {
       await fs.remove(path.join(providersDir, "theme-provider.tsx"));
+      await fs.remove(themeInitPath);
       await fs.remove(toggleDir);
       await fs.remove(path.join(projectDir, ".cursor", "rules", "dark-mode.mdc"));
       await fs.remove(
         path.join(projectDir, "docs", "style-guide", "ui", "dark-mode.md"),
       );
+      await removeDependencies(projectDir, ["next-themes"]);
       return;
     }
 
     await fs.ensureDir(providersDir);
     await fs.remove(path.join(providersDir, ".gitkeep"));
-    await fs.writeFile(
+    await copyAddonFile(
+      "dark-mode/providers/theme-provider.tsx",
       path.join(providersDir, "theme-provider.tsx"),
-      THEME_PROVIDER,
-      "utf8",
     );
+    await copyAddonFile("dark-mode/theme-init-script.ts", themeInitPath);
 
     await fs.ensureDir(toggleDir);
     const toggleSeed =
@@ -98,14 +93,14 @@ export const darkModeInstaller: Installer = {
       styling === "mui"
         ? `# Dark mode
 
-next-themes + MUI palette swap in \`MuiProvider\`.
-Provider: \`src/providers/theme-provider.tsx\` (via \`AppProviders\`).
+\`ThemeProvider\` / \`useTheme\` + MUI palette swap in \`MuiProvider\`.
+FOUC script from Server layout via \`src/lib/theme-init-script.ts\`.
 Sample: \`src/app/_components/theme-toggle/\` on the home page.
 `
         : `# Dark mode
 
-next-themes + Tailwind \`dark:\` variants.
-Provider: \`src/providers/theme-provider.tsx\` (via \`AppProviders\`).
+\`ThemeProvider\` / \`useTheme\` + Tailwind \`dark:\` variants.
+FOUC script from Server layout via \`src/lib/theme-init-script.ts\`.
 Sample: \`src/app/_components/theme-toggle/\` on the home page.
 `;
 
@@ -128,8 +123,7 @@ Sample: \`src/app/_components/theme-toggle/\` on the home page.
       }
     }
 
-    await addDependencies(projectDir, {
-      "next-themes": "^0.4.4",
-    });
+    // Drop legacy next-themes if a prior scaffold left it behind.
+    await removeDependencies(projectDir, ["next-themes"]);
   },
 };

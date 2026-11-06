@@ -46,24 +46,33 @@ export async function wireRootLayout(
       `import { AppProviders } from "@/providers/app-providers";`,
     );
   }
+  if (dark) {
+    imports.push(
+      `import { THEME_INIT_SCRIPT } from "@/lib/theme-init-script";`,
+    );
+  }
   if (i18n) {
     imports.push(`import { hasLocale } from "next-intl";`);
     imports.push(`import { notFound } from "next/navigation";`);
     imports.push(
-      `import { getMessages, setRequestLocale } from "next-intl/server";`,
+      `import { getMessages, getTimeZone, setRequestLocale } from "next-intl/server";`,
     );
     imports.push(`import { routing } from "@/i18n/routing";`);
   }
 
   const providersOpen = i18n
-    ? `        <AppProviders locale={locale} messages={messages}>`
+    ? `        <AppProviders locale={locale} messages={messages} timeZone={timeZone}>`
     : `        <AppProviders>`;
 
+  const themeScript = dark
+    ? `        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />\n`
+    : "";
+
   const bodyInner = useProviders
-    ? `${providersOpen}
+    ? `${themeScript}${providersOpen}
           <main>{children}</main>
         </AppProviders>`
-    : `        <main>{children}</main>`;
+    : `${themeScript}        <main>{children}</main>`;
 
   const fnBody = i18n
     ? `  const { locale } = await params;
@@ -73,6 +82,7 @@ export async function wireRootLayout(
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  const timeZone = await getTimeZone();
 
   return (
     <html lang=${htmlLang}${htmlExtra}>

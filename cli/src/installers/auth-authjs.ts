@@ -45,7 +45,7 @@ const ROUTE = `import { handlers } from "@/lib/auth";
 export const { GET, POST } = handlers;
 `;
 
-const MIDDLEWARE = `import { auth } from "@/lib/auth";
+const PROXY = `import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 const publicPaths = ["/login", "/api/auth"];
@@ -149,7 +149,7 @@ export function LoginForm() {
 
 const RULE = `---
 description: Auth.js (NextAuth) conventions
-globs: src/lib/auth.ts,src/app/api/auth/**/*,src/middleware.ts,src/app/**/login/**
+globs: src/lib/auth.ts,src/app/api/auth/**/*,src/proxy.ts,src/app/**/login/**
 alwaysApply: false
 ---
 
@@ -157,9 +157,9 @@ alwaysApply: false
 
 - Config: \`src/lib/auth.ts\` (Credentials demo — replace \`authorize\`).
 - Route handlers: \`src/app/api/auth/[...nextauth]/route.ts\`.
-- Middleware: \`src/middleware.ts\` protects non-public routes; public: \`/login\`, \`/api/auth\`.
+- Proxy: \`src/proxy.ts\` protects non-public routes; public: \`/login\`, \`/api/auth\`.
 - Login UI: \`src/app/login/\` (or \`src/app/[locale]/login/\` when i18n is on).
-- With i18n: middleware is composed (next-intl + auth) by the i18n installer — locale-prefixed public paths like \`/en/login\`.
+- With i18n: proxy is composed (next-intl + auth) by the i18n installer — locale-prefixed public paths like \`/en/login\`.
 - Env: \`AUTH_SECRET\` (required in production).
 - Prefer \`auth()\` in Server Components; \`signIn\` / \`signOut\` on the client.
 `;
@@ -186,10 +186,11 @@ export const authAuthjsInstaller: Installer = {
       ROUTE,
     );
     await fs.writeFile(
-      path.join(projectDir, "src", "middleware.ts"),
-      MIDDLEWARE,
+      path.join(projectDir, "src", "proxy.ts"),
+      PROXY,
       "utf8",
     );
+    await fs.remove(path.join(projectDir, "src", "middleware.ts"));
     await fs.outputFile(
       path.join(projectDir, "src", "app", "login", "page.tsx"),
       LOGIN_PAGE,
@@ -217,9 +218,9 @@ export const authAuthjsInstaller: Installer = {
 
 - \`src/lib/auth.ts\` — Credentials demo (replace \`authorize\`)
 - \`src/app/api/auth/[...nextauth]/route.ts\`
-- \`src/middleware.ts\` — protect routes; public \`/login\` + \`/api/auth\`
+- \`src/proxy.ts\` — protect routes; public \`/login\` + \`/api/auth\`
 - \`src/app/login/\` — sample login page (\`[locale]/login\` when i18n)
-- With i18n: intl+auth middleware composition; prefer locale-aware navigation for post-login redirects
+- With i18n: intl+auth proxy composition; prefer locale-aware navigation for post-login redirects
 - Env: \`AUTH_SECRET\`
 `,
     );

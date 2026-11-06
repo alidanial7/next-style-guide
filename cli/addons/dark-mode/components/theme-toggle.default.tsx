@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/providers/theme-provider";
 
 /** Sample control — swap for your chrome; light / dark / system when darkMode is on. */
 export function ThemeToggle() {

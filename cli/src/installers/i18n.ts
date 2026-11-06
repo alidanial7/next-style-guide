@@ -54,12 +54,13 @@ async function pruneI18n(projectDir: string): Promise<void> {
     path.join(projectDir, "docs", "style-guide", "i18n", "overview.md"),
   );
 
-  // Only remove middleware if it looks like the next-intl seed (not a custom file).
-  const middlewarePath = path.join(projectDir, "src", "middleware.ts");
-  if (await fs.pathExists(middlewarePath)) {
-    const text = await fs.readFile(middlewarePath, "utf8");
+  // Only remove proxy/middleware if it looks like the next-intl seed (not a custom file).
+  for (const name of ["proxy.ts", "middleware.ts"] as const) {
+    const edgePath = path.join(projectDir, "src", name);
+    if (!(await fs.pathExists(edgePath))) continue;
+    const text = await fs.readFile(edgePath, "utf8");
     if (text.includes("next-intl/middleware")) {
-      await fs.remove(middlewarePath);
+      await fs.remove(edgePath);
     }
   }
 
@@ -107,14 +108,11 @@ export const i18nInstaller: Installer = {
       path.join(projectDir, "messages", "fa.json"),
     );
 
-    const middlewareSeed =
-      options.auth === "authjs"
-        ? "i18n/middleware.with-auth.ts"
-        : "i18n/middleware.ts";
-    await copyAddonFile(
-      middlewareSeed,
-      path.join(projectDir, "src", "middleware.ts"),
-    );
+    const proxySeed =
+      options.auth === "authjs" ? "i18n/proxy.with-auth.ts" : "i18n/proxy.ts";
+    await copyAddonFile(proxySeed, path.join(projectDir, "src", "proxy.ts"));
+    // Drop legacy middleware if a prior scaffold left it behind.
+    await fs.remove(path.join(projectDir, "src", "middleware.ts"));
 
     const toggleDir = path.join(
       projectDir,
