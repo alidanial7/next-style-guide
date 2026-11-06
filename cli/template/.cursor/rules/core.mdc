@@ -13,6 +13,7 @@ alwaysApply: false
 - Server Components by default; `"use client"` only for interactivity.
 - Env: `src/lib/env.ts` (plain defaults, or Zod/Yup when scaffolded). HTTP via `lib/http` or `utils/api` / `endpoints` — not scattershot `fetch`.
 - Direction: `useDirection()` from `@/hooks/use-direction` — do not set `dir` ad hoc on random nodes.
+- i18n (when `.cursor/rules/i18n.mdc` exists): pages/layouts under `app/[locale]/`; prefer `@/i18n/navigation` + message keys over hardcoded copy/`next/link`.
 - Named exports `function Name()`; default exports only for Next route files.
 - One `<main>` in root layout only.
 - If you change these conventions, update this rule + `AGENTS.md` + `docs/style-guide/` together.

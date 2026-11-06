@@ -107,7 +107,7 @@ my-app/
 | 📨 | API envelope unwrap |
 | 🐳 | Docker Compose local API stub (JWT + endpoints; opt-in, on in `api-app`) |
 | 🔎 | SEO (public-routes, sitemap, robots) |
-| 🌐 | i18n (next-intl) |
+| 🌐 | i18n (next-intl v4 · `en`/`fa` · `[locale]` routing · sample LocaleSwitcher) |
 | 🧪 | Vitest (+ optional Playwright) |
 | 🧹 | Enhanced ESLint / Prettier / Husky (base Next ESLint always) |
 | 🚀 | Deploy: `none` / `vercel` / `docker` |

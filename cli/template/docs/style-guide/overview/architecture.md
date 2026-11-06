@@ -3,7 +3,9 @@
 ```text
 src/app/                      → routes + layouts (thin)
 src/app/_components/          → layout / homepage UI only
+src/app/[locale]/             → localized routes (when i18n enabled)
 src/app/<route>/_components/  → route-only UI
+src/i18n/ · messages/         → next-intl wiring (when i18n enabled)
 src/components/               → shared UI (≥2 routes) + ui/ primitives
 src/lib/                      → env, http, shared helpers
 src/utils/                    → API client helpers (when enabled)

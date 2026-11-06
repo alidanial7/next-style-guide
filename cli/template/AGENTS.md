@@ -25,6 +25,7 @@ Optional features (validation lib, Query, store, endpoints, i18n, SEO, dark mode
 - Keep UI components focused (≈150 lines soft cap) — split rather than grow mega-components.
 - Single `<main>` in root layout — never nest `<main>` in pages/components.
 - Text direction: use `useDirection()` from `@/hooks/use-direction` (do not hardcode `dir` ad hoc).
+- If `.cursor/rules/i18n.mdc` exists: routes under `src/app/[locale]/`; use `@/i18n/navigation` + `getTranslations` / `useTranslations` (see that rule).
 
 ## Don't
 

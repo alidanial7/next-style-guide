@@ -34,7 +34,9 @@ export function stackLines(options: ScaffoldOptions): string[] {
       ? "Docker Compose local API stub"
       : null,
     options.apiEnvelope ? "API envelope unwrap" : "No envelope unwrap",
-    options.i18n ? "i18n (next-intl)" : "No i18n",
+    options.i18n
+      ? "i18n (next-intl · en/fa · /[locale])"
+      : "No i18n",
     options.testing
       ? options.playwright
         ? "Vitest + Playwright"
@@ -70,8 +72,11 @@ export function welcomeCardSource(options: ScaffoldOptions): string {
 
   const directionHint =
     options.direction !== "ltr"
-      ? ' · direction via <code>useDirection()</code>'
+      ? " · direction via <code>useDirection()</code>"
       : "";
+  const i18nHint = options.i18n
+    ? " · copy via <code>getTranslations</code> · routes under <code>src/app/[locale]/</code>"
+    : "";
 
   // Keep WelcomeCard free of client hooks so Vitest SSR smoke stays valid.
   return `/** Homepage sample — reflects scaffold choices; replace with real UI. */
@@ -84,7 +89,7 @@ ${items}
       </ul>
       <p className="meta" style={{ marginTop: "1rem" }}>
         Route UI → <code>src/app/&lt;route&gt;/_components/</code> · shared →{" "}
-        <code>src/components/</code>${directionHint}
+        <code>src/components/</code>${directionHint}${i18nHint}
       </p>
     </div>
   );
@@ -93,8 +98,6 @@ ${items}
 }
 
 export function homePageSource(options: ScaffoldOptions): string {
-  const uiBit =
-    options.ui === "shadcn" ? " · ui=<code>shadcn</code>" : "";
   const themeImport = options.darkMode
     ? 'import { ThemeToggle } from "@/app/_components/theme-toggle";\n'
     : "";
@@ -102,8 +105,12 @@ export function homePageSource(options: ScaffoldOptions): string {
     options.direction === "both"
       ? 'import { DirectionToggle } from "@/app/_components/direction-toggle";\n'
       : "";
+  const localeImport = options.i18n
+    ? 'import { LocaleSwitcher } from "@/app/_components/locale-switcher";\n'
+    : "";
 
   const toolbarItems = [
+    options.i18n ? "        <LocaleSwitcher />" : null,
     options.darkMode ? "        <ThemeToggle />" : null,
     options.direction === "both" ? "        <DirectionToggle />" : null,
   ]
@@ -118,6 +125,56 @@ ${toolbarItems}
       </div>
 `
       : "";
+
+  if (options.i18n) {
+    const stylingLabel = escapeJsx(
+      options.ui === "shadcn"
+        ? `${options.styling}+shadcn`
+        : options.styling,
+    );
+    const validationLabel = escapeJsx(options.validation);
+    const iconsLabel = escapeJsx(options.icons);
+    const dataLabel = escapeJsx(options.data);
+    const nameLabel = escapeJsx(options.name);
+
+    return `import { getTranslations, setRequestLocale } from "next-intl/server";
+
+import { WelcomeCard } from "@/app/_components/welcome-card";
+${localeImport}${themeImport}${directionImport}
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function HomePage({ params }: Props) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("Home");
+
+  return (
+    <>
+      <section className="hero">
+        <h1>{t("title", { name: "${nameLabel}" })}</h1>
+        <p>
+          {t("body", {
+            styling: "${stylingLabel}",
+            validation: "${validationLabel}",
+            icons: "${iconsLabel}",
+            data: "${dataLabel}",
+          })}
+        </p>
+      </section>
+${toolbar}
+      <WelcomeCard />
+
+      <p className="meta">{t("meta")}</p>
+    </>
+  );
+}
+`;
+  }
+
+  const uiBit =
+    options.ui === "shadcn" ? " · ui=<code>shadcn</code>" : "";
 
   return `import { WelcomeCard } from "@/app/_components/welcome-card";
 ${themeImport}${directionImport}
@@ -194,7 +251,10 @@ export function docsIndex(options: ScaffoldOptions): string {
     rows.push(["[SEO](seo/overview.md)", "public-routes · sitemap · robots"]);
   }
   if (options.i18n) {
-    rows.push(["[i18n](i18n/overview.md)", "next-intl"]);
+    rows.push([
+      "[i18n](i18n/overview.md)",
+      "next-intl · en/fa · /[locale]",
+    ]);
   }
   if (options.apiEnvelope) {
     rows.push(["[API envelope](http/envelope.md)", "unwrap result"]);

@@ -2,14 +2,15 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import type { ScaffoldOptions } from "../types.js";
+import { appPagesDir } from "./app-paths.js";
 import { needsAppProviders } from "./app-providers.js";
 
-/** Rewrite root layout to use AppProviders (+ i18n locale when enabled). */
+/** Rewrite root / `[locale]` layout for AppProviders, dir, and i18n. */
 export async function wireRootLayout(
   projectDir: string,
   options: ScaffoldOptions,
 ): Promise<void> {
-  const layoutPath = path.join(projectDir, "src", "app", "layout.tsx");
+  const layoutPath = path.join(appPagesDir(projectDir, options), "layout.tsx");
   const useProviders = needsAppProviders(options);
   const dark = options.darkMode;
   const i18n = options.i18n;
@@ -32,10 +33,12 @@ export async function wireRootLayout(
   htmlExtraParts.push(`dir="${htmlDir}"`);
   const htmlExtra = ` ${htmlExtraParts.join(" ")}`;
 
+  const cssImport = i18n ? `import "../globals.css";` : `import "./globals.css";`;
+
   const imports = [
     `import type { Metadata } from "next";`,
     ``,
-    `import "./globals.css";`,
+    cssImport,
   ];
   if (useProviders) {
     imports.push(
@@ -44,9 +47,12 @@ export async function wireRootLayout(
     );
   }
   if (i18n) {
+    imports.push(`import { hasLocale } from "next-intl";`);
+    imports.push(`import { notFound } from "next/navigation";`);
     imports.push(
-      `import { getLocale, getMessages } from "next-intl/server";`,
+      `import { getMessages, setRequestLocale } from "next-intl/server";`,
     );
+    imports.push(`import { routing } from "@/i18n/routing";`);
   }
 
   const providersOpen = i18n
@@ -60,7 +66,12 @@ export async function wireRootLayout(
     : `        <main>{children}</main>`;
 
   const fnBody = i18n
-    ? `  const locale = await getLocale();
+    ? `  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
   const messages = await getMessages();
 
   return (
@@ -78,33 +89,73 @@ ${bodyInner}
     </html>
   );`;
 
+  const layoutProps = i18n
+    ? `export default async function LocaleLayout({
+  children,
+  params,
+}: Readonly<{
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}>) {
+${fnBody}
+}`
+    : `export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+${fnBody}
+}`;
+
+  const staticParams = i18n
+    ? `
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+`
+    : "";
+
   const source = `${imports.join("\n")}
 
 export const metadata: Metadata = {
   title: "__PROJECT_NAME__",
   description: "Generated with next-style-guide",
 };
-
-export default ${i18n ? "async " : ""}function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-${fnBody}
-}
+${staticParams}
+${layoutProps}
 `;
 
   let final = source;
-  if (await fs.pathExists(layoutPath)) {
-    const existing = await fs.readFile(layoutPath, "utf8");
+  // Prefer existing title from either legacy root layout or locale layout.
+  const candidates = [
+    layoutPath,
+    path.join(projectDir, "src", "app", "layout.tsx"),
+  ];
+  for (const candidate of candidates) {
+    if (!(await fs.pathExists(candidate))) continue;
+    const existing = await fs.readFile(candidate, "utf8");
     const titleMatch = existing.match(/title:\s*"([^"]+)"/);
     if (titleMatch?.[1] && titleMatch[1] !== "__PROJECT_NAME__") {
       final = final.replace(
         'title: "__PROJECT_NAME__"',
         `title: "${titleMatch[1]}"`,
       );
+      break;
     }
   }
 
+  await fs.ensureDir(path.dirname(layoutPath));
   await fs.writeFile(layoutPath, final, "utf8");
+
+  // Locale layout owns <html>; remove stray root layout if present.
+  if (i18n) {
+    const rootLayout = path.join(projectDir, "src", "app", "layout.tsx");
+    if (rootLayout !== layoutPath && (await fs.pathExists(rootLayout))) {
+      await fs.remove(rootLayout);
+    }
+    const rootPage = path.join(projectDir, "src", "app", "page.tsx");
+    if (await fs.pathExists(rootPage)) {
+      await fs.remove(rootPage);
+    }
+  }
 }

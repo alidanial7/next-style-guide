@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { ADDONS_DIR } from "../constants.js";
+import { appPagesDir } from "../helpers/app-paths.js";
 import type { Installer } from "./types.js";
 import {
   docsIndex,
@@ -25,11 +26,15 @@ export const surfaceInstaller: Installer = {
       welcomeCardSource(options),
       "utf8",
     );
-    await fs.writeFile(
-      path.join(projectDir, "src", "app", "page.tsx"),
-      homePageSource(options),
-      "utf8",
-    );
+    const pagePath = path.join(appPagesDir(projectDir, options), "page.tsx");
+    await fs.ensureDir(path.dirname(pagePath));
+    await fs.writeFile(pagePath, homePageSource(options), "utf8");
+    if (options.i18n) {
+      const strayRootPage = path.join(projectDir, "src", "app", "page.tsx");
+      if (await fs.pathExists(strayRootPage)) {
+        await fs.remove(strayRootPage);
+      }
+    }
 
     if (options.data === "tanstack-query") {
       await fs.copy(

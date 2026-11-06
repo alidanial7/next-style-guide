@@ -329,7 +329,7 @@ Options:
   --api-envelope | --no-api-envelope
   --docker-compose | --no-docker-compose
   --seo | --no-seo
-  --i18n | --no-i18n
+  --i18n | --no-i18n          # next-intl locale routing (en/fa · [locale])
   --testing | --no-testing
   --playwright | --no-playwright
   --eslint | --no-eslint

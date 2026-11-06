@@ -1,80 +1,147 @@
 import fs from "fs-extra";
 import path from "node:path";
 
+import { copyAddonFile } from "../helpers/addon-files.js";
 import { ensureNextIntlPlugin } from "../helpers/next-config.js";
 import { addDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
 
-/** next-intl v4 request config (App Router, no [locale] segment). */
-const I18N_REQUEST = `import { getRequestConfig } from "next-intl/server";
+/**
+ * Keep shared/non-localized artifacts at `src/app/` root.
+ * Route UI (`layout`, `page`, `login`, …) moves under `[locale]/`.
+ */
+const APP_ROOT_KEEP = new Set([
+  "api",
+  "globals.css",
+  "[locale]",
+  "_components",
+  "robots.ts",
+  "sitemap.ts",
+  "favicon.ico",
+  "icon.png",
+  "icon.ico",
+  "apple-icon.png",
+  "opengraph-image.png",
+  "twitter-image.png",
+]);
 
-export default getRequestConfig(async () => {
-  // Static for now — swap for cookie / header / routing when you add locales.
-  const locale = "en";
+async function moveAppIntoLocaleSegment(projectDir: string): Promise<void> {
+  const appDir = path.join(projectDir, "src", "app");
+  const localeDir = path.join(appDir, "[locale]");
+  await fs.ensureDir(localeDir);
 
-  return {
-    locale,
-    messages: (await import(\`../../messages/\${locale}.json\`)).default,
-  };
-});
-`;
-
-const MESSAGES_EN = `{
-  "Home": {
-    "title": "Welcome",
-    "body": "Scaffolded with next-style-guide."
+  const entries = await fs.readdir(appDir);
+  for (const entry of entries) {
+    if (APP_ROOT_KEEP.has(entry)) continue;
+    const from = path.join(appDir, entry);
+    const to = path.join(localeDir, entry);
+    if (await fs.pathExists(to)) {
+      await fs.remove(to);
+    }
+    await fs.move(from, to);
   }
 }
-`;
 
-const RULE = `---
-description: next-intl i18n conventions (v4 + Next.js 16)
-globs: src/i18n/**,messages/**,src/providers/app-providers.tsx,next.config.ts
-alwaysApply: false
----
+async function pruneI18n(projectDir: string): Promise<void> {
+  await fs.remove(path.join(projectDir, "src", "i18n"));
+  await fs.remove(path.join(projectDir, "messages"));
+  await fs.remove(
+    path.join(projectDir, "src", "app", "_components", "locale-switcher"),
+  );
+  await fs.remove(path.join(projectDir, ".cursor", "rules", "i18n.mdc"));
+  await fs.remove(
+    path.join(projectDir, "docs", "style-guide", "i18n", "overview.md"),
+  );
 
-# i18n (next-intl v4)
+  // Only remove middleware if it looks like the next-intl seed (not a custom file).
+  const middlewarePath = path.join(projectDir, "src", "middleware.ts");
+  if (await fs.pathExists(middlewarePath)) {
+    const text = await fs.readFile(middlewarePath, "utf8");
+    if (text.includes("next-intl/middleware")) {
+      await fs.remove(middlewarePath);
+    }
+  }
 
-- Request config: \`src/i18n/request.ts\` (wired by \`createNextIntlPlugin\` in \`next.config.ts\`).
-- Messages: \`messages/<locale>.json\`.
-- Prefer \`useTranslations\` / \`getTranslations\` — avoid hardcoded copy when a key exists.
-- Root layout: \`getLocale()\` + \`getMessages()\` → pass into \`AppProviders\`.
-- \`NextIntlClientProvider\` lives in client \`AppProviders\` — always pass \`locale\` + \`messages\` explicitly (inheritance only works when the provider itself is rendered from a Server Component).
-- Keep \`next-intl@^4.5\` — v3 injects \`experimental.turbo\` which Next.js 16 rejects.
-`;
+  const localeDir = path.join(projectDir, "src", "app", "[locale]");
+  if (!(await fs.pathExists(localeDir))) return;
+
+  const appDir = path.join(projectDir, "src", "app");
+  const entries = await fs.readdir(localeDir);
+  for (const entry of entries) {
+    const from = path.join(localeDir, entry);
+    const to = path.join(appDir, entry);
+    if (await fs.pathExists(to)) {
+      await fs.remove(to);
+    }
+    await fs.move(from, to);
+  }
+  await fs.remove(localeDir);
+}
 
 export const i18nInstaller: Installer = {
   id: "i18n",
-  active: (o) => o.i18n,
-  async run({ projectDir }) {
-    await fs.outputFile(
-      path.join(projectDir, "src", "i18n", "request.ts"),
-      I18N_REQUEST,
+  active: () => true,
+  async run({ projectDir, options }) {
+    if (!options.i18n) {
+      await pruneI18n(projectDir);
+      return;
+    }
+
+    const i18nDir = path.join(projectDir, "src", "i18n");
+    await fs.ensureDir(i18nDir);
+
+    await copyAddonFile("i18n/routing.ts", path.join(i18nDir, "routing.ts"));
+    await copyAddonFile(
+      "i18n/navigation.ts",
+      path.join(i18nDir, "navigation.ts"),
     );
-    await fs.outputFile(
+    await copyAddonFile("i18n/request.ts", path.join(i18nDir, "request.ts"));
+
+    await copyAddonFile(
+      "i18n/messages/en.json",
       path.join(projectDir, "messages", "en.json"),
-      MESSAGES_EN,
     );
-    await fs.writeFile(
+    await copyAddonFile(
+      "i18n/messages/fa.json",
+      path.join(projectDir, "messages", "fa.json"),
+    );
+
+    const middlewareSeed =
+      options.auth === "authjs"
+        ? "i18n/middleware.with-auth.ts"
+        : "i18n/middleware.ts";
+    await copyAddonFile(
+      middlewareSeed,
+      path.join(projectDir, "src", "middleware.ts"),
+    );
+
+    const toggleDir = path.join(
+      projectDir,
+      "src",
+      "app",
+      "_components",
+      "locale-switcher",
+    );
+    await fs.ensureDir(toggleDir);
+    const toggleSeed =
+      options.styling === "mui"
+        ? "i18n/components/locale-switcher.mui.tsx"
+        : "i18n/components/locale-switcher.default.tsx";
+    await copyAddonFile(toggleSeed, path.join(toggleDir, "index.tsx"));
+
+    await moveAppIntoLocaleSegment(projectDir);
+
+    await copyAddonFile(
+      "i18n/.cursor/rules/i18n.mdc",
       path.join(projectDir, ".cursor", "rules", "i18n.mdc"),
-      RULE,
-      "utf8",
     );
-    await fs.outputFile(
+    await copyAddonFile(
+      "i18n/docs/style-guide/i18n/overview.md",
       path.join(projectDir, "docs", "style-guide", "i18n", "overview.md"),
-      `# i18n
-
-next-intl **v4+**: \`src/i18n/request.ts\` + \`messages/en.json\`
-Plugin: \`createNextIntlPlugin("./src/i18n/request.ts")\` in \`next.config.ts\`.
-Layout loads \`locale\`/\`messages\` and passes them into client \`AppProviders\` → \`NextIntlClientProvider\`.
-
-Requires Next.js 15.3+ / 16 — do not use next-intl v3 (breaks Turbopack config).
-`,
     );
 
     await ensureNextIntlPlugin(projectDir);
 
-    // v4.5+ uses top-level `turbopack` resolveAlias — required for Next.js 16
     await addDependencies(projectDir, {
       "next-intl": "^4.5.0",
     });

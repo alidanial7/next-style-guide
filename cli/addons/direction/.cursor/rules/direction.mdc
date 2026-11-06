@@ -8,5 +8,6 @@ alwaysApply: false
 
 - Hook: `useDirection()` from `@/hooks/use-direction`.
 - `direction=both` → `DirectionProvider` + homepage sample `DirectionToggle` under `src/app/_components/` (not shared `components/`).
+- Direction is independent of i18n locale — do not assume `fa` ⇒ RTL; wire `dir` via this hook (or fixed scaffold `direction`).
 - MUI: Emotion cache uses `stylis-plugin-rtl` when `isRtl`; theme `direction` follows the hook.
 - Prefer logical CSS (`margin-inline`, `padding-inline`) over raw left/right when supporting both.

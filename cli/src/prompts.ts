@@ -273,7 +273,7 @@ async function promptCustomOptions(
 
   const i18n = assertNotCancel(
     await p.confirm({
-      message: "Add i18n (next-intl)?",
+      message: "Add i18n (next-intl · en/fa · /[locale] routing)?",
       initialValue: base.i18n,
     }),
   );

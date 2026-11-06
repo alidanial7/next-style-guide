@@ -30,5 +30,6 @@ alwaysApply: false
 | Shared forms | `src/components/forms/<name>/` |
 | Route-only forms | `src/app/<route>/_components/forms/<name>/` |
 | shadcn primitives | `src/components/ui/*` (flat) |
+| i18n routes (when enabled) | Pages/layouts under `src/app/[locale]/…` — home samples still `src/app/_components/` |
 
-Never park single-route UI in `src/components/`. Reuse existing shared/UI primitives before new markup. Don't duplicate identical markup/handlers across pages.
+Never park single-route UI in `src/components/`. Reuse existing shared/UI primitives before new markup. Don't duplicate identical markup/handlers across pages. When i18n is on, see `.cursor/rules/i18n.mdc`.

@@ -1,0 +1,12 @@
+{
+  "Home": {
+    "title": "{name}",
+    "body": "Scaffolded with next-style-guide (Next.js 16). styling={styling} · validation={validation} · icons={icons} · data={data}.",
+    "meta": "Read AGENTS.md and docs/style-guide/ before adding routes. Feature rules in .cursor/rules/ load by glob. Prefer getTranslations / useTranslations for UI copy."
+  },
+  "LocaleSwitcher": {
+    "label": "Language (sample)",
+    "en": "English",
+    "fa": "Persian"
+  }
+}

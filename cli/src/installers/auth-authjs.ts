@@ -149,7 +149,7 @@ export function LoginForm() {
 
 const RULE = `---
 description: Auth.js (NextAuth) conventions
-globs: src/lib/auth.ts,src/app/api/auth/**/*,src/middleware.ts,src/app/login/**
+globs: src/lib/auth.ts,src/app/api/auth/**/*,src/middleware.ts,src/app/**/login/**
 alwaysApply: false
 ---
 
@@ -158,7 +158,8 @@ alwaysApply: false
 - Config: \`src/lib/auth.ts\` (Credentials demo — replace \`authorize\`).
 - Route handlers: \`src/app/api/auth/[...nextauth]/route.ts\`.
 - Middleware: \`src/middleware.ts\` protects non-public routes; public: \`/login\`, \`/api/auth\`.
-- Login UI: \`src/app/login/\`.
+- Login UI: \`src/app/login/\` (or \`src/app/[locale]/login/\` when i18n is on).
+- With i18n: middleware is composed (next-intl + auth) by the i18n installer — locale-prefixed public paths like \`/en/login\`.
 - Env: \`AUTH_SECRET\` (required in production).
 - Prefer \`auth()\` in Server Components; \`signIn\` / \`signOut\` on the client.
 `;
@@ -217,7 +218,8 @@ export const authAuthjsInstaller: Installer = {
 - \`src/lib/auth.ts\` — Credentials demo (replace \`authorize\`)
 - \`src/app/api/auth/[...nextauth]/route.ts\`
 - \`src/middleware.ts\` — protect routes; public \`/login\` + \`/api/auth\`
-- \`src/app/login/\` — sample login page
+- \`src/app/login/\` — sample login page (\`[locale]/login\` when i18n)
+- With i18n: intl+auth middleware composition; prefer locale-aware navigation for post-login redirects
 - Env: \`AUTH_SECRET\`
 `,
     );

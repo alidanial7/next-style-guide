@@ -47,7 +47,7 @@ Also refresh related installer-written `docs/style-guide/**` pages when the conv
 | Store | `none` · `zustand` · `redux` |
 | Icons | `none` · `lucide` · `tabler` — **shadcn forces lucide** unless tabler |
 | Direction | `ltr` · `rtl` · `both` (`useDirection` · sample toggle when both) |
-| i18n | next-intl **v4.5+** (never v3 — breaks Next 16 Turbopack config) |
+| i18n | next-intl **v4.5+** locale routing (`en`/`fa`, `[locale]`, middleware, LocaleSwitcher); prune when off — never v3 |
 | Dark mode | next-themes (requires Tailwind or MUI) |
 | Data | RSC default · optional TanStack Query |
 | Endpoints / envelope | OpenAPI codegen · optional unwrap |
