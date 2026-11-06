@@ -22,6 +22,7 @@ Optional features (validation lib, Query, store, endpoints, i18n, SEO, dark mode
 - Infra → `src/lib/`; API helpers → `src/utils/`; client state → `src/stores/` (when present).
 - Named exports `function Foo()`; default only for Next route files.
 - Prefer Server Components; `"use client"` only when needed.
+- Keep UI components focused (≈150 lines soft cap) — split rather than grow mega-components.
 - Single `<main>` in root layout — never nest `<main>` in pages/components.
 - Text direction: use `useDirection()` from `@/hooks/use-direction` (do not hardcode `dir` ad hoc).
 
@@ -29,6 +30,7 @@ Optional features (validation lib, Query, store, endpoints, i18n, SEO, dark mode
 
 - Park single-route UI in `src/components/`.
 - Flat files in `_components/` (use `<name>/index.tsx`).
+- Dump unrelated UI/state/fetch into one component file.
 - Invent a second folder convention without updating this file + matching `.cursor/rules/*.mdc` + `docs/style-guide/`.
 - Auto `git commit` / `git push` — leave that to the developer.
 

@@ -25,7 +25,6 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
 
   if (options.i18n) {
     imports.push(`import { NextIntlClientProvider } from "next-intl";`);
-    props.push(`messages: Record<string, unknown>`);
   }
   if (options.direction === "both") {
     imports.push(
@@ -49,7 +48,8 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
   const closers: string[] = [];
 
   if (options.i18n) {
-    openers.push(`    <NextIntlClientProvider messages={messages}>`);
+    // v4: inherits locale/messages from getRequestConfig (no props required).
+    openers.push(`    <NextIntlClientProvider>`);
     closers.unshift(`    </NextIntlClientProvider>`);
   }
   if (options.direction === "both") {
@@ -83,7 +83,7 @@ type AppProvidersProps = {
  * Single composition root for client providers.
  * Feature installers add leaf providers; this file wraps them in a stable order.
  */
-export function AppProviders({ children${options.i18n ? ", messages" : ""} }: AppProvidersProps) {
+export function AppProviders({ children }: AppProvidersProps) {
   return (
 ${openers.join("\n")}
       {children}
@@ -107,109 +107,4 @@ export async function writeAppProviders(
     generateAppProvidersSource(options),
     "utf8",
   );
-}
-
-/** Rewrite root layout to use AppProviders (+ i18n locale when enabled). */
-export async function wireRootLayout(
-  projectDir: string,
-  options: ScaffoldOptions,
-): Promise<void> {
-  const layoutPath = path.join(projectDir, "src", "app", "layout.tsx");
-  const useProviders = needsAppProviders(options);
-  const dark = options.darkMode;
-  const i18n = options.i18n;
-  const bothDir = options.direction === "both";
-  // Always set dir on <html> (including both → default) so SSR/portals match theme.
-  const htmlDir =
-    options.direction === "rtl"
-      ? "rtl"
-      : options.direction === "both" && options.styling === "mui"
-        ? "rtl"
-        : "ltr";
-
-  const htmlLang = i18n
-    ? "{locale}"
-    : htmlDir === "rtl"
-      ? `"fa"`
-      : `"en"`;
-  const htmlExtraParts: string[] = [];
-  if (dark || bothDir) htmlExtraParts.push("suppressHydrationWarning");
-  htmlExtraParts.push(`dir="${htmlDir}"`);
-  const htmlExtra = ` ${htmlExtraParts.join(" ")}`;
-
-  const imports = [
-    `import type { Metadata } from "next";`,
-    ``,
-    `import "./globals.css";`,
-  ];
-  if (useProviders) {
-    imports.push(
-      ``,
-      `import { AppProviders } from "@/providers/app-providers";`,
-    );
-  }
-  if (i18n) {
-    imports.push(
-      `import { getLocale, getMessages } from "next-intl/server";`,
-    );
-  }
-
-  const bodyInner = useProviders
-    ? i18n
-      ? `        <AppProviders messages={messages}>
-          <main>{children}</main>
-        </AppProviders>`
-      : `        <AppProviders>
-          <main>{children}</main>
-        </AppProviders>`
-    : `        <main>{children}</main>`;
-
-  const fnBody = i18n
-    ? `  const locale = await getLocale();
-  const messages = await getMessages();
-
-  return (
-    <html lang=${htmlLang}${htmlExtra}>
-      <body>
-${bodyInner}
-      </body>
-    </html>
-  );`
-    : `  return (
-    <html lang=${htmlLang}${htmlExtra}>
-      <body>
-${bodyInner}
-      </body>
-    </html>
-  );`;
-
-  const source = `${imports.join("\n")}
-
-export const metadata: Metadata = {
-  title: "__PROJECT_NAME__",
-  description: "Generated with next-style-guide",
-};
-
-export default ${i18n ? "async " : ""}function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-${fnBody}
-}
-`;
-
-  let final = source;
-  if (await fs.pathExists(layoutPath)) {
-    const existing = await fs.readFile(layoutPath, "utf8");
-    const titleMatch = existing.match(/title:\s*"([^"]+)"/);
-    if (titleMatch?.[1] && titleMatch[1] !== "__PROJECT_NAME__") {
-      final = final.replace(
-        'title: "__PROJECT_NAME__"',
-        `title: "${titleMatch[1]}"`,
-      );
-    }
-  }
-
-  await fs.writeFile(layoutPath, final, "utf8");
 }

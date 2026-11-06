@@ -2,7 +2,8 @@ node_modules/
 dist/
 .turbo/
 .next/
-_gen_smoke/
+_gen_*/
+/Smoke*/
 *.log
 .DS_Store
 .env

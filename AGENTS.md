@@ -47,6 +47,7 @@ Also refresh related installer-written `docs/style-guide/**` pages when the conv
 | Store | `none` · `zustand` · `redux` |
 | Icons | `none` · `lucide` · `tabler` — **shadcn forces lucide** unless tabler |
 | Direction | `ltr` · `rtl` · `both` (`useDirection` · sample toggle when both) |
+| i18n | next-intl **v4.5+** (never v3 — breaks Next 16 Turbopack config) |
 | Dark mode | next-themes (requires Tailwind or MUI) |
 | Data | RSC default · optional TanStack Query |
 | Endpoints / envelope | OpenAPI codegen · optional unwrap |
@@ -66,6 +67,7 @@ Normalize incompatible combos in `normalizeOptions` (`cli/src/types.ts`). Soft w
 | Copy + replace | `cli/src/scaffold.ts`, `cli/src/helpers/` |
 | Feature wiring | `cli/src/installers/` |
 | Generated Next app | `cli/template/` |
-| Addon rule/docs seeds | `cli/addons/` |
+| Addon rule/docs/UI seeds | `cli/addons/` (prefer file seeds over inline installer strings) |
+| Endpoints codegen | `cli/addons/endpoints/scripts/` (+ `lib/*`) |
 | Smoke | `scripts/smoke.sh` |
 | Version | `VERSION` |

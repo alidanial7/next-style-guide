@@ -2,225 +2,23 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { ADDONS_DIR } from "../constants.js";
+import { copyAddonFile } from "../helpers/addon-files.js";
 import { addDependencies } from "../helpers/package-json.js";
 import type { ScaffoldOptions } from "../types.js";
 import { needsRtlEmotion } from "./direction.js";
 import type { Installer } from "./types.js";
 
-function muiProviderSource(options: ScaffoldOptions): string {
+/** Addon filename under `mui/src/providers/` (without path). */
+function muiProviderSeedFilename(options: ScaffoldOptions): string {
   const dark = options.darkMode;
-  const rtlCapable = needsRtlEmotion(options);
   const fixedRtl = options.direction === "rtl";
   const both = options.direction === "both";
 
-  const imports = [
-    `"use client";`,
-    ``,
-    dark || both
-      ? `import { useEffect, useMemo, useState, type ReactNode } from "react";`
-      : `import type { ReactNode } from "react";`,
-    ``,
-    `import CssBaseline from "@mui/material/CssBaseline";`,
-    `import { createTheme, ThemeProvider } from "@mui/material/styles";`,
-    `import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";`,
-  ];
-
-  if (dark) {
-    imports.push(`import { useTheme } from "next-themes";`);
-  }
-  if (both) {
-    imports.push(`import { useDirection } from "@/hooks/use-direction";`);
-  }
-  if (rtlCapable) {
-    imports.push(`import { prefixer } from "stylis";`);
-    imports.push(`import rtlPlugin from "stylis-plugin-rtl";`);
-  }
-
-  imports.push(``);
-  imports.push(`import themeOptions from "@/theme/theme";`);
-  if (dark) {
-    imports.push(`import getPalette from "@/theme/theme-palette";`);
-  }
-
-  let body: string;
-
-  if (both && dark) {
-    body = `
-export function MuiProvider({ children }: { children: ReactNode }) {
-  const { resolvedTheme } = useTheme();
-  const { direction, isRtl } = useDirection();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const theme = useMemo(() => {
-    const mode =
-      mounted && resolvedTheme === "dark" ? ("dark" as const) : ("light" as const);
-    return createTheme({
-      ...themeOptions,
-      direction,
-      palette: getPalette(mode),
-    });
-  }, [mounted, resolvedTheme, direction]);
-
-  // key swap remounts MUI subtree on LTR↔RTL (needed for stylis plugin change).
-  return (
-    <AppRouterCacheProvider
-      key={isRtl ? "mui-rtl" : "mui-ltr"}
-      options={
-        isRtl
-          ? { key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }
-          : { key: "mui-ltr" }
-      }
-    >
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <div className={theme.palette.mode} dir={direction}>
-          {children}
-        </div>
-      </ThemeProvider>
-    </AppRouterCacheProvider>
-  );
+  if (both && dark) return "mui-provider.both-dark.tsx";
+  if (both) return "mui-provider.both.tsx";
+  if (dark) return fixedRtl ? "mui-provider.dark-rtl.tsx" : "mui-provider.dark-ltr.tsx";
+  return fixedRtl ? "mui-provider.rtl.tsx" : "mui-provider.ltr.tsx";
 }
-`;
-  } else if (both) {
-    body = `
-export function MuiProvider({ children }: { children: ReactNode }) {
-  const { direction, isRtl } = useDirection();
-
-  const theme = useMemo(
-    () =>
-      createTheme({
-        ...themeOptions,
-        direction,
-      }),
-    [direction],
-  );
-
-  // key swap remounts MUI subtree on LTR↔RTL (needed for stylis plugin change).
-  return (
-    <AppRouterCacheProvider
-      key={isRtl ? "mui-rtl" : "mui-ltr"}
-      options={
-        isRtl
-          ? { key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }
-          : { key: "mui-ltr" }
-      }
-    >
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <div dir={direction}>{children}</div>
-      </ThemeProvider>
-    </AppRouterCacheProvider>
-  );
-}
-`;
-  } else if (dark) {
-    const dir = fixedRtl ? "rtl" : "ltr";
-    const cache = fixedRtl
-      ? `
-    <AppRouterCacheProvider
-      key="mui-rtl"
-      options={{ key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }}
-    >`
-      : `
-    <AppRouterCacheProvider>`;
-    const cacheClose = `    </AppRouterCacheProvider>`;
-    body = `
-export function MuiProvider({ children }: { children: ReactNode }) {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const theme = useMemo(() => {
-    const mode =
-      mounted && resolvedTheme === "dark" ? ("dark" as const) : ("light" as const);
-    return createTheme({
-      ...themeOptions,
-      direction: "${dir}",
-      palette: getPalette(mode),
-    });
-  }, [mounted, resolvedTheme]);
-
-  return (
-${cache}
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <div className={theme.palette.mode} dir="${dir}">
-          {children}
-        </div>
-      </ThemeProvider>
-${cacheClose}
-  );
-}
-`;
-  } else {
-    const dir = fixedRtl ? "rtl" : "ltr";
-    if (fixedRtl) {
-      body = `
-const theme = createTheme({
-  ...themeOptions,
-  direction: "rtl",
-});
-
-export function MuiProvider({ children }: { children: ReactNode }) {
-  return (
-    <AppRouterCacheProvider
-      key="mui-rtl"
-      options={{ key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }}
-    >
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <div dir="rtl">{children}</div>
-      </ThemeProvider>
-    </AppRouterCacheProvider>
-  );
-}
-`;
-    } else {
-      body = `
-const theme = createTheme({
-  ...themeOptions,
-  direction: "ltr",
-});
-
-export function MuiProvider({ children }: { children: ReactNode }) {
-  return (
-    <AppRouterCacheProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
-    </AppRouterCacheProvider>
-  );
-}
-`;
-    }
-  }
-
-  return `${imports.join("\n")}\n${body}`;
-}
-
-const RULE = `---
-description: MUI (Material UI) theme + provider conventions
-globs: src/theme/**,src/providers/mui-provider.tsx
-alwaysApply: false
----
-
-# MUI
-
-- Theme modules live under \`src/theme/\` (\`theme.ts\` composes palette · typography · breakpoints · components).
-- Provider: \`MuiProvider\` in \`src/providers/mui-provider.tsx\` (Emotion App Router cache + \`ThemeProvider\` + \`CssBaseline\`).
-- Direction: follows scaffold \`direction\` (fixed or \`useDirection\` when \`both\`); RTL uses \`stylis-plugin-rtl\`.
-- Prefer MUI components over ad-hoc CSS; put shared overrides in \`theme-components.ts\`.
-- Do not add shadcn — incompatible with this styling choice.
-- Breakpoint \`xxs\` is enabled via module augmentation in \`theme.ts\`.
-`;
 
 export const muiInstaller: Installer = {
   id: "mui",
@@ -238,16 +36,14 @@ export const muiInstaller: Installer = {
     const providersDir = path.join(projectDir, "src", "providers");
     await fs.ensureDir(providersDir);
     await fs.remove(path.join(providersDir, ".gitkeep"));
-    await fs.writeFile(
+    await copyAddonFile(
+      path.join("mui", "src", "providers", muiProviderSeedFilename(options)),
       path.join(providersDir, "mui-provider.tsx"),
-      muiProviderSource(options),
-      "utf8",
     );
 
-    await fs.writeFile(
+    await copyAddonFile(
+      "mui/.cursor/rules/mui.mdc",
       path.join(projectDir, ".cursor", "rules", "mui.mdc"),
-      RULE,
-      "utf8",
     );
 
     const deps: Record<string, string> = {

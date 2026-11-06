@@ -1,9 +1,9 @@
 import type { Installer } from "./types.js";
 import {
   needsAppProviders,
-  wireRootLayout,
   writeAppProviders,
 } from "../helpers/app-providers.js";
+import { wireRootLayout } from "../helpers/layout-wiring.js";
 
 /**
  * Compose client providers (when needed) and always wire root layout

@@ -9,9 +9,16 @@ alwaysApply: false
 ## Folder-per-component
 
 - Every component: `<name>/index.tsx` (never flat `_components/foo.tsx`).
-- Private children: `<name>/_components/<child>.tsx` (or nested folders).
+- Private children: `<name>/_components/<child>/index.tsx` (or nested folders).
 - Named export `function ComponentName()` — no default (except Next route files).
 - When Vitest is enabled: colocated `<name>.test.tsx` next to `index.tsx`.
+
+## Size & responsibility
+
+- One job per component. Prefer extract over grow.
+- Soft cap ≈ **150 lines** for UI components; split earlier if it mixes fetch + form + layout + modal.
+- Providers under `src/providers/*.tsx` stay thin (compose only) — heavy logic belongs in hooks/`lib`.
+- shadcn `ui/*` primitives may stay flat and slightly denser (CLI-compatible).
 
 ## Placement
 

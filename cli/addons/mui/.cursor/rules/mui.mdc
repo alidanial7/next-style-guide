@@ -1,0 +1,14 @@
+---
+description: MUI (Material UI) theme + provider conventions
+globs: src/theme/**,src/providers/mui-provider.tsx
+alwaysApply: false
+---
+
+# MUI
+
+- Theme modules live under `src/theme/` (`theme.ts` composes palette · typography · breakpoints · components).
+- Provider: `MuiProvider` in `src/providers/mui-provider.tsx` (Emotion App Router cache + `ThemeProvider` + `CssBaseline`).
+- Direction: follows scaffold `direction` (fixed or `useDirection` when `both`); RTL uses `stylis-plugin-rtl`.
+- Prefer MUI components over ad-hoc CSS; put shared overrides in `theme-components.ts`.
+- Do not add shadcn — incompatible with this styling choice.
+- Breakpoint `xxs` is enabled via module augmentation in `theme.ts`.

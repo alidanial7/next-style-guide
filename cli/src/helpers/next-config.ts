@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 `;
 
+const NEXT_INTL_REQUEST_PATH = "./src/i18n/request.ts";
+
 /** Ensure `output: "standalone"` without wiping other next.config plugins/wrappers. */
 export async function ensureStandaloneOutput(
   projectDir: string,
@@ -38,24 +40,39 @@ export async function ensureStandaloneOutput(
 
 /**
  * Wire next-intl plugin around the existing next.config export.
- * Safe to call when already wired.
+ * Safe to call when already wired. Must run after any installer that
+ * mutates next.config (e.g. docker standalone merge).
  */
 export async function ensureNextIntlPlugin(projectDir: string): Promise<void> {
   const nextConfigPath = path.join(projectDir, "next.config.ts");
   if (!(await fs.pathExists(nextConfigPath))) return;
 
   let src = await fs.readFile(nextConfigPath, "utf8");
-  if (
+
+  const alreadyWrapped =
     src.includes("createNextIntlPlugin") &&
-    /export\s+default\s+withNextIntl\s*\(/.test(src)
-  ) {
+    /export\s+default\s+withNextIntl\s*\(/.test(src);
+
+  if (alreadyWrapped) {
+    // Keep request path explicit for Turbopack alias resolution.
+    if (!src.includes(NEXT_INTL_REQUEST_PATH)) {
+      src = src.replace(
+        /createNextIntlPlugin\(\s*\)/,
+        `createNextIntlPlugin("${NEXT_INTL_REQUEST_PATH}")`,
+      );
+      src = src.replace(
+        /createNextIntlPlugin\(\s*['"][^'"]+['"]\s*\)/,
+        `createNextIntlPlugin("${NEXT_INTL_REQUEST_PATH}")`,
+      );
+      await fs.writeFile(nextConfigPath, src, "utf8");
+    }
     return;
   }
 
   if (!src.includes("createNextIntlPlugin")) {
-    src = `import createNextIntlPlugin from "next-intl/plugin";\n\nconst withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");\n\n${src}`;
+    src = `import createNextIntlPlugin from "next-intl/plugin";\n\nconst withNextIntl = createNextIntlPlugin("${NEXT_INTL_REQUEST_PATH}");\n\n${src}`;
   } else if (!src.includes("withNextIntl")) {
-    src = `const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");\n\n${src}`;
+    src = `const withNextIntl = createNextIntlPlugin("${NEXT_INTL_REQUEST_PATH}");\n\n${src}`;
   }
 
   if (!/export\s+default\s+withNextIntl\s*\(/.test(src)) {

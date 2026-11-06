@@ -5,10 +5,13 @@ import { ensureNextIntlPlugin } from "../helpers/next-config.js";
 import { addDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
 
+/** next-intl v4 request config (App Router, no [locale] segment). */
 const I18N_REQUEST = `import { getRequestConfig } from "next-intl/server";
 
 export default getRequestConfig(async () => {
+  // Static for now — swap for cookie / header / routing when you add locales.
   const locale = "en";
+
   return {
     locale,
     messages: (await import(\`../../messages/\${locale}.json\`)).default,
@@ -25,17 +28,18 @@ const MESSAGES_EN = `{
 `;
 
 const RULE = `---
-description: next-intl i18n conventions
-globs: src/i18n/**,messages/**,src/providers/app-providers.tsx
+description: next-intl i18n conventions (v4 + Next.js 16)
+globs: src/i18n/**,messages/**,src/providers/app-providers.tsx,next.config.ts
 alwaysApply: false
 ---
 
-# i18n (next-intl)
+# i18n (next-intl v4)
 
-- Request config: \`src/i18n/request.ts\`.
+- Request config: \`src/i18n/request.ts\` (wired by \`createNextIntlPlugin\` in \`next.config.ts\`).
 - Messages: \`messages/<locale>.json\`.
 - Prefer \`useTranslations\` / \`getTranslations\` — avoid hardcoded copy when a key exists.
-- \`NextIntlClientProvider\` is composed in \`AppProviders\`; root layout loads locale/messages.
+- \`NextIntlClientProvider\` in \`AppProviders\` inherits request config (no manual messages prop required).
+- Keep \`next-intl@^4.5\` — v3 injects \`experimental.turbo\` which Next.js 16 rejects.
 `;
 
 export const i18nInstaller: Installer = {
@@ -59,15 +63,19 @@ export const i18nInstaller: Installer = {
       path.join(projectDir, "docs", "style-guide", "i18n", "overview.md"),
       `# i18n
 
-next-intl: \`src/i18n/request.ts\` + \`messages/en.json\`
-Plugin wired in \`next.config.ts\`. Provider via \`AppProviders\`.
+next-intl **v4+**: \`src/i18n/request.ts\` + \`messages/en.json\`
+Plugin: \`createNextIntlPlugin("./src/i18n/request.ts")\` in \`next.config.ts\`.
+Provider: \`NextIntlClientProvider\` via \`AppProviders\` (inherits request config).
+
+Requires Next.js 15.3+ / 16 — do not use next-intl v3 (breaks Turbopack config).
 `,
     );
 
     await ensureNextIntlPlugin(projectDir);
 
+    // v4.5+ uses top-level `turbopack` resolveAlias — required for Next.js 16
     await addDependencies(projectDir, {
-      "next-intl": "^3.26.3",
+      "next-intl": "^4.5.0",
     });
   },
 };
