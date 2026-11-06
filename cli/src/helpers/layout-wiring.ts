@@ -44,17 +44,24 @@ export async function wireRootLayout(
     );
   }
   if (i18n) {
-    imports.push(`import { getLocale } from "next-intl/server";`);
+    imports.push(
+      `import { getLocale, getMessages } from "next-intl/server";`,
+    );
   }
 
+  const providersOpen = i18n
+    ? `        <AppProviders locale={locale} messages={messages}>`
+    : `        <AppProviders>`;
+
   const bodyInner = useProviders
-    ? `        <AppProviders>
+    ? `${providersOpen}
           <main>{children}</main>
         </AppProviders>`
     : `        <main>{children}</main>`;
 
   const fnBody = i18n
     ? `  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
     <html lang=${htmlLang}${htmlExtra}>

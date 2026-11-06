@@ -25,6 +25,9 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
 
   if (options.i18n) {
     imports.push(`import { NextIntlClientProvider } from "next-intl";`);
+    // Required: AppProviders is a Client Component — locale is NOT inferred.
+    props.push(`locale: string`);
+    props.push(`messages: Record<string, unknown>`);
   }
   if (options.direction === "both") {
     imports.push(
@@ -48,8 +51,9 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
   const closers: string[] = [];
 
   if (options.i18n) {
-    // v4: inherits locale/messages from getRequestConfig (no props required).
-    openers.push(`    <NextIntlClientProvider>`);
+    openers.push(
+      `    <NextIntlClientProvider locale={locale} messages={messages}>`,
+    );
     closers.unshift(`    </NextIntlClientProvider>`);
   }
   if (options.direction === "both") {
@@ -73,6 +77,10 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
     closers.unshift(`    </QueryProvider>`);
   }
 
+  const destructure = options.i18n
+    ? "{ children, locale, messages }"
+    : "{ children }";
+
   return `${imports.join("\n")}
 
 type AppProvidersProps = {
@@ -83,7 +91,7 @@ type AppProvidersProps = {
  * Single composition root for client providers.
  * Feature installers add leaf providers; this file wraps them in a stable order.
  */
-export function AppProviders({ children }: AppProvidersProps) {
+export function AppProviders(${destructure}: AppProvidersProps) {
   return (
 ${openers.join("\n")}
       {children}

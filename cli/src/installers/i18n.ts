@@ -38,7 +38,8 @@ alwaysApply: false
 - Request config: \`src/i18n/request.ts\` (wired by \`createNextIntlPlugin\` in \`next.config.ts\`).
 - Messages: \`messages/<locale>.json\`.
 - Prefer \`useTranslations\` / \`getTranslations\` — avoid hardcoded copy when a key exists.
-- \`NextIntlClientProvider\` in \`AppProviders\` inherits request config (no manual messages prop required).
+- Root layout: \`getLocale()\` + \`getMessages()\` → pass into \`AppProviders\`.
+- \`NextIntlClientProvider\` lives in client \`AppProviders\` — always pass \`locale\` + \`messages\` explicitly (inheritance only works when the provider itself is rendered from a Server Component).
 - Keep \`next-intl@^4.5\` — v3 injects \`experimental.turbo\` which Next.js 16 rejects.
 `;
 
@@ -65,7 +66,7 @@ export const i18nInstaller: Installer = {
 
 next-intl **v4+**: \`src/i18n/request.ts\` + \`messages/en.json\`
 Plugin: \`createNextIntlPlugin("./src/i18n/request.ts")\` in \`next.config.ts\`.
-Provider: \`NextIntlClientProvider\` via \`AppProviders\` (inherits request config).
+Layout loads \`locale\`/\`messages\` and passes them into client \`AppProviders\` → \`NextIntlClientProvider\`.
 
 Requires Next.js 15.3+ / 16 — do not use next-intl v3 (breaks Turbopack config).
 `,
