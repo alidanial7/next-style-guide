@@ -13,6 +13,7 @@ import {
   DEFAULT_OPTIONS,
   normalizeOptions,
   type AuthOption,
+  type CiOption,
   type DeployOption,
   type DirectionOption,
   type IconOption,
@@ -333,8 +334,25 @@ async function promptCustomOptions(
   );
 
   const ci = assertNotCancel(
-    await p.confirm({
-      message: "Add GitHub Actions CI?",
+    await p.select({
+      message: "CI provider?",
+      options: [
+        {
+          value: "none" satisfies CiOption,
+          label: "None",
+          hint: "no pipeline files",
+        },
+        {
+          value: "github" satisfies CiOption,
+          label: "GitHub Actions",
+          hint: ".github/workflows/ci.yml",
+        },
+        {
+          value: "gitlab" satisfies CiOption,
+          label: "GitLab CI",
+          hint: ".gitlab-ci.yml",
+        },
+      ],
       initialValue: base.ci,
     }),
   );

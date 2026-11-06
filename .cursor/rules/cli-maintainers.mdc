@@ -36,4 +36,6 @@ Do not leave `.mdc` / AGENTS copy describing old behavior. Feature rules ship **
 - **dockerCompose**: explicit opt-in; requires `auth=jwt` + `endpoints` (on in `api-app`). Not the same as `deploy=docker`.
 - **direction**: always installs `useDirection`; `both` adds provider + sample toggle; MUI + rtl/both adds stylis RTL.
 - **eslint flag**: enhanced rules only; base Next ESLint stays in the template.
+- **ci**: `none` | `github` | `gitlab` — GitHub → `.github/workflows/ci.yml`; GitLab → `.gitlab-ci.yml`. `--no-ci` alias for none.
+- **docker + next.config**: never overwrite `next.config.ts` wholesale — merge `output: "standalone"` via `ensureStandaloneOutput`. i18n runs after docker and uses `ensureNextIntlPlugin`.
 - Root `README.md` is the publish readme (`cli/prepack` copies it). Do not hand-edit `cli/README.md`.

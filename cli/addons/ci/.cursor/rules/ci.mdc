@@ -1,11 +1,12 @@
 ---
-description: GitHub Actions CI workflow
+description: GitHub Actions CI workflow (seed; installer writes provider-specific rule)
 globs: .github/workflows/**
 alwaysApply: false
 ---
 
-# CI
+# CI (GitHub Actions)
 
-- Workflow: `.github/workflows/ci.yml` — install → typecheck → lint/format (if enabled) → build.
+- Workflow: `.github/workflows/ci.yml` — install → typecheck → lint/format (if enabled) → test → build.
 - Keep jobs green before merge. Don't skip checks with unrelated workflow edits.
 - New required scripts must be reflected in the workflow steps.
+- GitLab CI apps use `.gitlab-ci.yml` instead (see installer-written `ci.mdc`).

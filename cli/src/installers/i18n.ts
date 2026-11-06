@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 
+import { ensureNextIntlPlugin } from "../helpers/next-config.js";
 import { addDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
 
@@ -63,20 +64,7 @@ Plugin wired in \`next.config.ts\`. Provider via \`AppProviders\`.
 `,
     );
 
-    const nextConfigPath = path.join(projectDir, "next.config.ts");
-    if (await fs.pathExists(nextConfigPath)) {
-      let nextConfig = await fs.readFile(nextConfigPath, "utf8");
-      if (!nextConfig.includes("next-intl")) {
-        if (!nextConfig.includes("createNextIntlPlugin")) {
-          nextConfig = `import createNextIntlPlugin from "next-intl/plugin";\n\nconst withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");\n\n${nextConfig}`;
-        }
-        nextConfig = nextConfig.replace(
-          "export default nextConfig;",
-          "export default withNextIntl(nextConfig);",
-        );
-        await fs.writeFile(nextConfigPath, nextConfig, "utf8");
-      }
-    }
+    await ensureNextIntlPlugin(projectDir);
 
     await addDependencies(projectDir, {
       "next-intl": "^3.26.3",

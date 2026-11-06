@@ -44,7 +44,6 @@ export const installers: Installer[] = [
   shadcnInstaller,
   validationInstaller,
   seoInstaller,
-  i18nInstaller,
   dockerComposeInstaller,
   testingInstaller,
   eslintInstaller,
@@ -52,6 +51,8 @@ export const installers: Installer[] = [
   huskyInstaller,
   dockerInstaller,
   vercelInstaller,
+  // After docker so next-intl plugin is not wiped by standalone merge edge-cases
+  i18nInstaller,
   ciInstaller,
   appProvidersInstaller,
   surfaceInstaller,

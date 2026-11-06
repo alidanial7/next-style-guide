@@ -1,7 +1,10 @@
-# CI / CD
+# CI
 
-GitHub Actions: `.github/workflows/ci.yml`.
+Scaffold chooses a provider:
 
-Typical steps: checkout → pnpm → install → `typecheck` → `lint` / Prettier check (when enabled) → `build`.
+- **GitHub Actions** → `.github/workflows/ci.yml`
+- **GitLab CI** → `.gitlab-ci.yml`
 
-Push to `main`/`master` and pull requests trigger the workflow.
+Typical steps: install → `typecheck` → `lint` / Prettier check (when enabled) → `test` → `build`.
+
+Triggers: push/`main`/`master` and pull requests (GitHub) or merge requests (GitLab).

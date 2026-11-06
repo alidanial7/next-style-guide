@@ -111,9 +111,9 @@ my-app/
 | 🧪 | Vitest (+ optional Playwright) |
 | 🧹 | Enhanced ESLint / Prettier / Husky (base Next ESLint always) |
 | 🚀 | Deploy: `none` / `vercel` / `docker` |
-| 🤖 | GitHub Actions CI |
+| 🤖 | CI: `none` / `github` (Actions) / `gitlab` (`.gitlab-ci.yml`) |
 
-Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--shadcn-set`, `--direction`, `--deploy`, `--dark-mode`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--docker-compose`, `--icons`, … (+ `--no-*`).
+Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--shadcn-set`, `--direction`, `--deploy`, `--ci`, `--dark-mode`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--docker-compose`, `--icons`, … (+ `--no-*`).
 
 Default scaffold is a **neutral base** (no endpoints/envelope/store). Use presets for common stacks.
 

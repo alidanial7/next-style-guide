@@ -52,7 +52,8 @@ Also refresh related installer-written `docs/style-guide/**` pages when the conv
 | Endpoints / envelope | OpenAPI codegen · optional unwrap |
 | Docker Compose | opt-in local API stub — needs JWT + endpoints (`api-app` on by default) |
 | Deploy | `none` · `vercel` · `docker` (prod image; separate from Compose) |
-| Tooling | Enhanced ESLint (base Next ESLint always) · Prettier · Husky · Vitest · Playwright · CI |
+| CI | `none` · `github` (Actions) · `gitlab` (`.gitlab-ci.yml`) |
+| Tooling | Enhanced ESLint (base Next ESLint always) · Prettier · Husky · Vitest · Playwright |
 
 Normalize incompatible combos in `normalizeOptions` (`cli/src/types.ts`). Soft warnings: `collectOptionWarnings` (`cli/src/presets.ts`).
 

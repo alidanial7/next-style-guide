@@ -17,6 +17,7 @@ import {
   DEFAULT_OPTIONS,
   normalizeOptions,
   type AuthOption,
+  type CiOption,
   type DeployOption,
   type DirectionOption,
   type IconOption,
@@ -36,6 +37,7 @@ const STORE_VALUES = new Set<StoreOption>(["none", "zustand", "redux"]);
 const PM_VALUES = new Set<PackageManager>(["pnpm", "npm", "yarn"]);
 const SHADCN_SET_VALUES = new Set<ShadcnSetOption>(["minimal", "starter"]);
 const DEPLOY_VALUES = new Set<DeployOption>(["none", "vercel", "docker"]);
+const CI_VALUES = new Set<CiOption>(["none", "github", "gitlab"]);
 const DIRECTION_VALUES = new Set<DirectionOption>(["ltr", "rtl", "both"]);
 const PRESET_VALUES = new Set<PresetId>([
   "custom",
@@ -76,7 +78,7 @@ type FlagBag = {
   prettier?: boolean;
   husky?: boolean;
   deploy?: DeployOption;
-  ci?: boolean;
+  ci?: CiOption;
 };
 
 function parseBoolFlag(
@@ -169,7 +171,6 @@ function parseArgs(argv: string[]): FlagBag {
       ["eslint", "--eslint", "--no-eslint"],
       ["prettier", "--prettier", "--no-prettier"],
       ["husky", "--husky", "--no-husky"],
-      ["ci", "--ci", "--no-ci"],
       ["shadcn", "--shadcn", "--no-shadcn"],
     ] as const;
     let matched = false;
@@ -267,6 +268,29 @@ function parseArgs(argv: string[]): FlagBag {
       }
       continue;
     }
+    if (arg === "--no-ci") {
+      out.ci = "none";
+      continue;
+    }
+    if (arg.startsWith("--ci=")) {
+      const value = arg.slice("--ci=".length) as CiOption;
+      if (!CI_VALUES.has(value)) {
+        throw new Error(`Invalid --ci=${value}.`);
+      }
+      out.ci = value;
+      continue;
+    }
+    if (arg === "--ci") {
+      const next = args[i + 1] as CiOption | undefined;
+      if (next && CI_VALUES.has(next)) {
+        out.ci = next;
+        i += 1;
+      } else {
+        // Bare `--ci` → GitHub Actions (legacy boolean flag)
+        out.ci = "github";
+      }
+      continue;
+    }
 
     if (!arg.startsWith("-") && !out.name) {
       out.name = arg;
@@ -313,7 +337,8 @@ Options:
   --husky | --no-husky
   --deploy none|vercel|docker
   --docker | --no-docker   (alias for --deploy docker / none)
-  --ci | --no-ci
+  --ci none|github|gitlab
+  --no-ci             alias for --ci none
   --verbose, -V       advisory tips (e.g. Query vs store)
   --help, -h
 

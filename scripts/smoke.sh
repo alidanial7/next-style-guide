@@ -171,7 +171,19 @@ assert_file "$DOCKER/docker/production.Dockerfile"
 assert_file "$DOCKER/.dockerignore"
 assert_file "$DOCKER/docs/style-guide/ops/docker.md"
 assert_grep "Deploy: Docker" "$DOCKER/src/app/_components/welcome-card/index.tsx"
+assert_grep 'output: "standalone"' "$DOCKER/next.config.ts"
 assert_missing "$DOCKER/vercel.json"
+
+echo "==> Scaffold SmokeDockerI18n (docker must keep next-intl plugin)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeDockerI18n" --yes --no-install \
+  --deploy docker --i18n \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+assert_grep 'output: "standalone"' "$OUT/SmokeDockerI18n/next.config.ts"
+assert_grep "withNextIntl" "$OUT/SmokeDockerI18n/next.config.ts"
+assert_grep "createNextIntlPlugin" "$OUT/SmokeDockerI18n/next.config.ts"
+assert_file "$OUT/SmokeDockerI18n/src/i18n/request.ts"
 
 echo "==> Scaffold $NAME_MUI (mui forces no shadcn)"
 cd "$OUT"
@@ -405,10 +417,33 @@ MIN="$OUT/$NAME_MIN"
 assert_missing "$MIN/vitest.config.mts"
 assert_missing "$MIN/.cursor/rules/api-envelope.mdc"
 assert_missing "$MIN/.github/workflows/ci.yml"
+assert_missing "$MIN/.gitlab-ci.yml"
 assert_missing "$MIN/src/stores"
 assert_not_grep "axios" "$MIN/package.json"
 assert_grep "No tests" "$MIN/src/app/_components/welcome-card/index.tsx"
 assert_grep "No client store" "$MIN/src/app/_components/welcome-card/index.tsx"
+
+echo "==> Scaffold SmokeGitlabCi (--ci gitlab)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeGitlabCi" --yes --no-install \
+  --ci gitlab \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky
+assert_file "$OUT/SmokeGitlabCi/.gitlab-ci.yml"
+assert_file "$OUT/SmokeGitlabCi/.cursor/rules/ci.mdc"
+assert_missing "$OUT/SmokeGitlabCi/.github/workflows/ci.yml"
+assert_grep "GitLab CI" "$OUT/SmokeGitlabCi/src/app/_components/welcome-card/index.tsx"
+assert_grep "node:22" "$OUT/SmokeGitlabCi/.gitlab-ci.yml"
+
+echo "==> Scaffold SmokeGithubCi (--ci github)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeGithubCi" --yes --no-install \
+  --ci github \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky
+assert_file "$OUT/SmokeGithubCi/.github/workflows/ci.yml"
+assert_missing "$OUT/SmokeGithubCi/.gitlab-ci.yml"
+assert_grep "GitHub Actions CI" "$OUT/SmokeGithubCi/src/app/_components/welcome-card/index.tsx"
 
 echo "==> Scaffold in-place with ."
 DOT_DIR="$OUT/smoke_inplace"

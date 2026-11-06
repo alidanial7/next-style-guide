@@ -56,7 +56,11 @@ function stackLines(options: ScaffoldOptions): string[] {
       : options.deploy === "vercel"
         ? "Deploy: Vercel"
         : "No deploy target",
-    options.ci ? "GitHub Actions CI" : "No CI workflow",
+    options.ci === "github"
+      ? "GitHub Actions CI"
+      : options.ci === "gitlab"
+        ? "GitLab CI"
+        : "No CI workflow",
   ].filter((line): line is string => line !== null);
 }
 
@@ -228,8 +232,11 @@ function docsIndex(options: ScaffoldOptions): string {
   if (options.deploy === "vercel") {
     rows.push(["[Vercel](ops/vercel.md)", "vercel.json + env notes"]);
   }
-  if (options.ci) {
+  if (options.ci === "github") {
     rows.push(["[CI](ops/ci.md)", "GitHub Actions"]);
+  }
+  if (options.ci === "gitlab") {
+    rows.push(["[CI](ops/ci.md)", "GitLab CI"]);
   }
 
   const table = [

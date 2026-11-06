@@ -17,6 +17,8 @@ export type StoreOption = "none" | "zustand" | "redux";
 export type PackageManager = "pnpm" | "npm" | "yarn";
 /** Production deploy target */
 export type DeployOption = "none" | "vercel" | "docker";
+/** CI provider (checks on push/MR) */
+export type CiOption = "none" | "github" | "gitlab";
 /** Document / UI text direction */
 export type DirectionOption = "ltr" | "rtl" | "both";
 
@@ -64,8 +66,8 @@ export type ScaffoldOptions = {
   husky: boolean;
   /** Deploy target: none | vercel | docker */
   deploy: DeployOption;
-  /** GitHub Actions CI */
-  ci: boolean;
+  /** CI: none | github (Actions) | gitlab (GitLab CI) */
+  ci: CiOption;
   /** Vitest unit/component tests */
   testing: boolean;
   /** Playwright e2e (requires testing) */
@@ -96,7 +98,7 @@ export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
   prettier: true,
   husky: true,
   deploy: "none",
-  ci: true,
+  ci: "github",
   testing: true,
   playwright: false,
   noInstall: false,

@@ -2,19 +2,10 @@ import fs from "fs-extra";
 import path from "node:path";
 
 import { ADDONS_DIR } from "../constants.js";
+import { ensureStandaloneOutput } from "../helpers/next-config.js";
 import { getPackageManager } from "../helpers/package-manager.js";
 import type { PackageManager } from "../types.js";
 import type { Installer } from "./types.js";
-
-const STANDALONE_CONFIG = `import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  output: "standalone",
-};
-
-export default nextConfig;
-`;
 
 function dockerfileFor(pm: PackageManager): string {
   if (pm === "npm") {
@@ -221,10 +212,7 @@ export const dockerInstaller: Installer = {
       doc,
     );
 
-    await fs.writeFile(
-      path.join(projectDir, "next.config.ts"),
-      STANDALONE_CONFIG,
-      "utf8",
-    );
+    // Merge into existing next.config (do not wipe next-intl / other wrappers).
+    await ensureStandaloneOutput(projectDir);
   },
 };
