@@ -1,6 +1,7 @@
 /**
- * Copy repo README + LICENSE into cli/ so npm pack/publish show them on the package page.
- * Root README is the single source of truth — do not edit cli/README.md by hand.
+ * Copy repo README + LICENSE + brand assets into cli/ so npm pack/publish
+ * show them on the package page. Root README is the single source of truth —
+ * do not edit cli/README.md by hand.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,4 +19,12 @@ for (const name of ["README.md", "LICENSE"]) {
   }
   fs.copyFileSync(from, to);
   console.log(`sync-npm-meta: ${name} → cli/${name}`);
+}
+
+const assetsFrom = path.join(rootDir, "assets");
+const assetsTo = path.join(cliDir, "assets");
+if (fs.existsSync(assetsFrom)) {
+  fs.rmSync(assetsTo, { recursive: true, force: true });
+  fs.cpSync(assetsFrom, assetsTo, { recursive: true });
+  console.log("sync-npm-meta: assets/ → cli/assets/");
 }

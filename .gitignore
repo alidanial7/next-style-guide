@@ -12,6 +12,8 @@ _gen_*/
 !.env.*.example
 coverage/
 *.tsbuildinfo
-# Copied from repo root on npm pack/publish (single source: ./README.md, ./LICENSE)
+assets/logo-preview.png
+# Copied from repo root on npm pack/publish (single source: ./README.md, ./LICENSE, ./assets)
 cli/README.md
 cli/LICENSE
+cli/assets/

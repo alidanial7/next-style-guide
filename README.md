@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" width="72" alt="Next.js" />
+  <img src="assets/logo.png" width="96" height="96" alt="next-style-guide" />
 </p>
 
 <h1 align="center">Next Style Guide</h1>

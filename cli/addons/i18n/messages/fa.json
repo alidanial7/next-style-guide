@@ -1,7 +1,7 @@
 {
   "Home": {
     "title": "{name}",
-    "body": "ساخته‌شده با next-style-guide (Next.js 16). styling={styling} · validation={validation} · icons={icons} · data={data}.",
+    "body": "ساخته‌شده با Next.js 16. styling={styling} · validation={validation} · icons={icons} · data={data}.",
     "meta": "قبل از اضافه کردن route، فایل‌های AGENTS.md و docs/style-guide/ را بخوانید. برای متن رابط کاربری از getTranslations / useTranslations استفاده کنید."
   },
   "LocaleSwitcher": {

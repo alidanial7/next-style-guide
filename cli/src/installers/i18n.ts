@@ -18,6 +18,7 @@ const APP_ROOT_KEEP = new Set([
   "robots.ts",
   "sitemap.ts",
   "favicon.ico",
+  "icon.svg",
   "icon.png",
   "icon.ico",
   "apple-icon.png",

@@ -87,7 +87,7 @@ export function WelcomeCard() {
       <ul>
 ${items}
       </ul>
-      <p className="meta" style={{ marginTop: "1rem" }}>
+      <p className="meta">
         Route UI → <code>src/app/&lt;route&gt;/_components/</code> · shared →{" "}
         <code>src/components/</code>${directionHint}${i18nHint}
       </p>
@@ -139,6 +139,7 @@ ${toolbarItems}
 
     return `import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { BrandLogo } from "@/app/_components/brand-logo";
 import { WelcomeCard } from "@/app/_components/welcome-card";
 ${localeImport}${themeImport}${directionImport}
 type Props = {
@@ -153,6 +154,10 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <section className="hero">
+        <div className="hero-brand">
+          <BrandLogo />
+          <p className="eyebrow">next-style-guide</p>
+        </div>
         <h1>{t("title", { name: "${nameLabel}" })}</h1>
         <p>
           {t("body", {
@@ -176,15 +181,20 @@ ${toolbar}
   const uiBit =
     options.ui === "shadcn" ? " · ui=<code>shadcn</code>" : "";
 
-  return `import { WelcomeCard } from "@/app/_components/welcome-card";
+  return `import { BrandLogo } from "@/app/_components/brand-logo";
+import { WelcomeCard } from "@/app/_components/welcome-card";
 ${themeImport}${directionImport}
 export default function HomePage() {
   return (
     <>
       <section className="hero">
+        <div className="hero-brand">
+          <BrandLogo />
+          <p className="eyebrow">next-style-guide</p>
+        </div>
         <h1>${options.name}</h1>
         <p>
-          Scaffolded with <strong>next-style-guide</strong> (Next.js 16).
+          Scaffolded with Next.js 16.
           styling=<code>${options.styling}</code>${uiBit} · validation=
           <code>${options.validation}</code> · icons=<code>${options.icons}</code> ·
           data=<code>${options.data}</code>.
