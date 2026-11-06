@@ -5,11 +5,11 @@ import {
   compareImportExportSources,
   compareStrings,
   emitTypeImport,
-} from "./import-sort.ts";
-import { escapeComment, safeKey } from "./helpers.ts";
-import { getParamDefaultValue, formatParamJsDoc } from "./param-helpers.ts";
-import { createResolver, emitTsType } from "./schema.ts";
-import type { EndpointSpec, OpenAPI } from "./types.ts";
+} from "./import-sort";
+import { escapeComment, safeKey } from "./helpers";
+import { getParamDefaultValue, formatParamJsDoc } from "./param-helpers";
+import { createResolver, emitTsType } from "./schema";
+import type { EndpointSpec, OpenAPI } from "./types";
 
 export function toEnumConstName(typeName: string): string {
   const snake = typeName

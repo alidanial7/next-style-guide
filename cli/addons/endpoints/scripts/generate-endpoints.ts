@@ -6,7 +6,7 @@
  *   pnpm endpoints:generate --url=http://localhost:8000/api/docs/schema/?format=json
  */
 
-import { main } from "./lib/cli.ts";
+import { main } from "./lib/cli";
 
 main().catch((error) => {
   console.error(error);

@@ -1,4 +1,4 @@
-import type { JsonSchema } from "./types.ts";
+import type { JsonSchema } from "./types";
 
 export function schemaHasBinary(schema: JsonSchema | null): boolean {
   if (!schema) {

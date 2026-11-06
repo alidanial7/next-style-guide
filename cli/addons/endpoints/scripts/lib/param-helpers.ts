@@ -1,4 +1,4 @@
-import type { JsonSchema, Parameter } from "./types.ts";
+import type { JsonSchema, Parameter } from "./types";
 
 export function getParamDefaultValue(
   parameter: Parameter,

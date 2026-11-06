@@ -1,21 +1,21 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { MANIFEST_NAME } from "./constants.ts";
+import { MANIFEST_NAME } from "./constants";
 import {
   collectAllResources,
   emitEnumsFile,
   emitRootIndex,
   emitResourceIndex,
   writeEndpointFiles,
-} from "./emit.ts";
-import { formatGeneratedWithPrettier } from "./format-generated.ts";
-import { groupBy } from "./helpers.ts";
-import { fetchSchema, loadConfig } from "./openapi.ts";
-import { ROOT } from "./paths.ts";
-import { buildSpecs } from "./spec.ts";
-import type { Manifest } from "./types.ts";
-import { readManifest, removeStaleGeneratedFiles, pruneEmptyDirs } from "./fs-sync.ts";
+} from "./emit";
+import { formatGeneratedWithPrettier } from "./format-generated";
+import { groupBy } from "./helpers";
+import { fetchSchema, loadConfig } from "./openapi";
+import { ROOT } from "./paths";
+import { buildSpecs } from "./spec";
+import type { Manifest } from "./types";
+import { readManifest, removeStaleGeneratedFiles, pruneEmptyDirs } from "./fs-sync";
 
 export async function main() {
   const config = await loadConfig();

@@ -1,8 +1,8 @@
-import { HTTP_METHODS } from "./constants.ts";
-import { camelCase, pascalCase, stripBraces, trimSlashes } from "./helpers.ts";
-import { getParamDefaultValue } from "./param-helpers.ts";
-import { createResolver, schemaHasBinary, schemaHasUploadField } from "./schema.ts";
-import type { EndpointSpec, JsonSchema, OpenAPI } from "./types.ts";
+import { HTTP_METHODS } from "./constants";
+import { camelCase, pascalCase, stripBraces, trimSlashes } from "./helpers";
+import { getParamDefaultValue } from "./param-helpers";
+import { createResolver, schemaHasBinary, schemaHasUploadField } from "./schema";
+import type { EndpointSpec, JsonSchema, OpenAPI } from "./types";
 
 export function buildSpecs(openapi: OpenAPI, basePath: string): EndpointSpec[] {
   const specs: EndpointSpec[] = [];

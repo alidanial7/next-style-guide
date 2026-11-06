@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 
-import { CONFIG_PATH } from "./paths.ts";
-import type { CodegenConfig, OpenAPI } from "./types.ts";
+import { CONFIG_PATH } from "./paths";
+import type { CodegenConfig, OpenAPI } from "./types";
 
 export async function loadConfig(): Promise<CodegenConfig> {
   const raw = await readFile(CONFIG_PATH, "utf8");

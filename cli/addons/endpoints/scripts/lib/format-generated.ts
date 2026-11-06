@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 
-import { ROOT } from "./paths.ts";
+import { ROOT } from "./paths";
 
 export function formatGeneratedWithPrettier(outDir: string, relFiles: string[]) {
   if (relFiles.length === 0) {

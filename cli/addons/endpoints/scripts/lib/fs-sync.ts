@@ -1,8 +1,8 @@
 import { readdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
-import { MANIFEST_NAME } from "./constants.ts";
-import type { Manifest } from "./types.ts";
+import { MANIFEST_NAME } from "./constants";
+import type { Manifest } from "./types";
 
 export async function readManifest(outDir: string): Promise<Manifest | null> {
   try {
