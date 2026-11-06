@@ -5,17 +5,29 @@ import { addDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
 
 const ZUSTAND_STORE = `import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 type AppState = {
   hydrated: boolean;
   setHydrated: (value: boolean) => void;
 };
 
-/** App-wide client store — extend slices as the product grows. */
-export const useAppStore = create<AppState>((set) => ({
-  hydrated: false,
-  setHydrated: (value) => set({ hydrated: value }),
-}));
+/**
+ * App-wide client store — UI / session only (not server cache).
+ * Add domain fields here or split into \`src/stores/<domain>-store.ts\`.
+ */
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      hydrated: false,
+      setHydrated: (value) => set({ hydrated: value }),
+    }),
+    {
+      name: "app-store",
+      partialize: (state) => ({ hydrated: state.hydrated }),
+    },
+  ),
+);
 `;
 
 const ZUSTAND_RULE = `---
@@ -26,15 +38,16 @@ alwaysApply: false
 
 # Zustand
 
-- Stores live under \`src/stores/\` (one file per domain slice when possible).
+- Stores live under \`src/stores/\` (one file per domain when it grows).
 - Prefer small selectors: \`useAppStore((s) => s.hydrated)\`.
-- Do not put server secrets or tokens in the client store.
+- \`persist\` is OK for UI prefs; never persist secrets / tokens.
 - Server Components stay free of store hooks — pass data down or use a client leaf.
+- TanStack Query = server cache; Zustand = client UI/session only.
 `;
 
-const REDUX_STORE = `import { configureStore, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+const REDUX_APP_SLICE = `import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-type AppSliceState = {
+export type AppSliceState = {
   hydrated: boolean;
 };
 
@@ -53,12 +66,25 @@ const appSlice = createSlice({
 });
 
 export const { setHydrated } = appSlice.actions;
+export default appSlice.reducer;
+`;
 
+const REDUX_STORE = `import { configureStore } from "@reduxjs/toolkit";
+
+import appReducer from "./slices/app-slice";
+
+/** Per-request store factory (App Router / RSC-safe). */
 export const makeStore = () =>
   configureStore({
     reducer: {
-      app: appSlice.reducer,
+      app: appReducer,
     },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        // Relax when you intentionally put non-serializable values in actions.
+        serializableCheck: true,
+        immutableCheck: true,
+      }),
   });
 
 export type AppStore = ReturnType<typeof makeStore>;
@@ -100,10 +126,12 @@ alwaysApply: false
 
 # Redux Toolkit
 
-- Store factory: \`src/stores/store.ts\` (\`makeStore\`).
+- Store factory: \`src/stores/store.ts\` (\`makeStore\` — one store per client tree).
+- Slices: \`src/stores/slices/*-slice.ts\` (register in \`store.ts\`).
 - Typed hooks: \`src/stores/hooks.ts\` (\`useAppDispatch\` / \`useAppSelector\`).
-- Provider: \`src/providers/store-provider.tsx\` (composed via \`AppProviders\`).
+- Provider: \`src/providers/store-provider.tsx\` (via \`AppProviders\`).
 - Prefer RTK slices; keep server secrets out of the client store.
+- TanStack Query = server cache; Redux = client UI/session only.
 `;
 
 export const storeInstaller: Installer = {
@@ -128,15 +156,22 @@ export const storeInstaller: Installer = {
         path.join(projectDir, "docs", "style-guide", "state", "zustand.md"),
         `# Zustand
 
-- Store: \`src/stores/app-store.ts\`
-- Extend with domain slices under \`src/stores/\`
+- Store: \`src/stores/app-store.ts\` (\`persist\` for UI prefs)
+- Prefer selectors; split domain stores under \`src/stores/\` as the app grows
+- Do not put server cache here — use TanStack Query when enabled
 `,
       );
       await addDependencies(projectDir, { zustand: "^5.0.3" });
       return;
     }
 
-    // redux
+    const slicesDir = path.join(storesDir, "slices");
+    await fs.ensureDir(slicesDir);
+    await fs.writeFile(
+      path.join(slicesDir, "app-slice.ts"),
+      REDUX_APP_SLICE,
+      "utf8",
+    );
     await fs.writeFile(path.join(storesDir, "store.ts"), REDUX_STORE, "utf8");
     await fs.writeFile(path.join(storesDir, "hooks.ts"), REDUX_HOOKS, "utf8");
 
@@ -158,7 +193,8 @@ export const storeInstaller: Installer = {
       path.join(projectDir, "docs", "style-guide", "state", "redux.md"),
       `# Redux Toolkit
 
-- Store: \`src/stores/store.ts\`
+- Store: \`src/stores/store.ts\` (\`makeStore\`)
+- Slices: \`src/stores/slices/\`
 - Hooks: \`src/stores/hooks.ts\`
 - Provider: \`src/providers/store-provider.tsx\` (via \`AppProviders\`)
 `,

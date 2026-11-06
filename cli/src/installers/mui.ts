@@ -1,23 +1,21 @@
 import fs from "fs-extra";
 import path from "node:path";
 
+import { ADDONS_DIR } from "../constants.js";
 import { addDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
 
-const THEME_PROVIDER = `"use client";
+const PROVIDER_LIGHT = `"use client";
 
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 
-const theme = createTheme({
-  cssVariables: true,
-  palette: {
-    mode: "light",
-    primary: { main: "#0b5fff" },
-  },
-});
+import themeOptions from "@/theme/theme";
+
+const theme = createTheme(themeOptions);
 
 export function MuiProvider({ children }: { children: ReactNode }) {
   return (
@@ -31,32 +29,83 @@ export function MuiProvider({ children }: { children: ReactNode }) {
 }
 `;
 
+const PROVIDER_DARK = `"use client";
+
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+
+import CssBaseline from "@mui/material/CssBaseline";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import { useTheme } from "next-themes";
+
+import themeOptions from "@/theme/theme";
+import getPalette from "@/theme/theme-palette";
+
+export function MuiProvider({ children }: { children: ReactNode }) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const theme = useMemo(() => {
+    const mode =
+      mounted && resolvedTheme === "dark" ? ("dark" as const) : ("light" as const);
+    return createTheme({
+      ...themeOptions,
+      palette: getPalette(mode),
+    });
+  }, [mounted, resolvedTheme]);
+
+  return (
+    <AppRouterCacheProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <div className={theme.palette.mode}>{children}</div>
+      </ThemeProvider>
+    </AppRouterCacheProvider>
+  );
+}
+`;
+
 const RULE = `---
-description: MUI (Material UI) conventions
-globs: src/providers/mui-provider.tsx,src/**/*.{ts,tsx}
+description: MUI (Material UI) theme + provider conventions
+globs: src/theme/**,src/providers/mui-provider.tsx
 alwaysApply: false
 ---
 
 # MUI
 
-- Theme via \`MuiProvider\` (\`src/providers/mui-provider.tsx\`), composed in \`AppProviders\`.
-- Prefer MUI components (\`Button\`, \`TextField\`, \`Stack\`, …) over ad-hoc CSS.
+- Theme modules live under \`src/theme/\` (\`theme.ts\` composes palette · typography · breakpoints · components).
+- Provider: \`MuiProvider\` in \`src/providers/mui-provider.tsx\` (Emotion App Router cache + \`ThemeProvider\` + \`CssBaseline\`).
+- Prefer MUI components over ad-hoc CSS; put shared overrides in \`theme-components.ts\`.
 - Do not add shadcn — incompatible with this styling choice.
-- Emotion cache: \`@mui/material-nextjs\` App Router provider (already wired).
+- Breakpoint \`xxs\` is enabled via module augmentation in \`theme.ts\`.
 `;
 
 export const muiInstaller: Installer = {
   id: "mui",
   active: (o) => o.styling === "mui",
-  async run({ projectDir }) {
+  async run({ projectDir, options }) {
+    const addon = path.join(ADDONS_DIR, "mui");
+    const themeDir = path.join(projectDir, "src", "theme");
+
+    await fs.copy(path.join(addon, "src", "theme"), themeDir);
+    await fs.copy(
+      path.join(addon, "docs", "style-guide", "ui", "mui.md"),
+      path.join(projectDir, "docs", "style-guide", "ui", "mui.md"),
+    );
+
     const providersDir = path.join(projectDir, "src", "providers");
     await fs.ensureDir(providersDir);
     await fs.remove(path.join(providersDir, ".gitkeep"));
     await fs.writeFile(
       path.join(providersDir, "mui-provider.tsx"),
-      THEME_PROVIDER,
+      options.darkMode ? PROVIDER_DARK : PROVIDER_LIGHT,
       "utf8",
     );
+
     await fs.writeFile(
       path.join(projectDir, ".cursor", "rules", "mui.mdc"),
       RULE,

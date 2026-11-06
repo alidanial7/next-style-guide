@@ -18,23 +18,30 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 `;
 
-const RULE = `---
-description: Dark mode (next-themes) with Tailwind
-globs: src/providers/theme-provider.tsx,src/app/globals.css
+function ruleFor(styling: "tailwind" | "mui"): string {
+  const extra =
+    styling === "mui"
+      ? "- MUI: \`MuiProvider\` reads \`resolvedTheme\` and swaps palette via \`getPalette\`."
+      : "- Tailwind: use \`dark:\` variants; \`html\` gets \`class=\"dark\"\` from next-themes.";
+  return `---
+description: Dark mode (next-themes)
+globs: src/providers/theme-provider.tsx,src/providers/mui-provider.tsx,src/app/globals.css
 alwaysApply: false
 ---
 
 # Dark mode
 
 - \`ThemeProvider\` in \`src/providers/theme-provider.tsx\` (composed via \`AppProviders\`).
-- Tailwind: use \`dark:\` variants; \`html\` gets \`class="dark"\` from next-themes.
+${extra}
 - Prefer \`defaultTheme="system"\`.
 `;
+}
 
 export const darkModeInstaller: Installer = {
   id: "dark-mode",
-  active: (o) => o.darkMode && o.styling === "tailwind",
-  async run({ projectDir }) {
+  active: (o) =>
+    o.darkMode && (o.styling === "tailwind" || o.styling === "mui"),
+  async run({ projectDir, options }) {
     const providersDir = path.join(projectDir, "src", "providers");
     await fs.ensureDir(providersDir);
     await fs.remove(path.join(providersDir, ".gitkeep"));
@@ -43,30 +50,43 @@ export const darkModeInstaller: Installer = {
       THEME_PROVIDER,
       "utf8",
     );
+
+    const styling = options.styling === "mui" ? "mui" : "tailwind";
     await fs.writeFile(
       path.join(projectDir, ".cursor", "rules", "dark-mode.mdc"),
-      RULE,
+      ruleFor(styling),
       "utf8",
     );
-    await fs.outputFile(
-      path.join(projectDir, "docs", "style-guide", "ui", "dark-mode.md"),
-      `# Dark mode
+
+    const docBody =
+      styling === "mui"
+        ? `# Dark mode
+
+next-themes + MUI palette swap in \`MuiProvider\`.
+Provider: \`src/providers/theme-provider.tsx\` (via \`AppProviders\`).
+`
+        : `# Dark mode
 
 next-themes + Tailwind \`dark:\` variants.
 Provider: \`src/providers/theme-provider.tsx\` (via \`AppProviders\`).
-`,
+`;
+
+    await fs.outputFile(
+      path.join(projectDir, "docs", "style-guide", "ui", "dark-mode.md"),
+      docBody,
     );
 
-    // Ensure dark variant works with Tailwind v4 class strategy
-    const globalsPath = path.join(projectDir, "src", "app", "globals.css");
-    if (await fs.pathExists(globalsPath)) {
-      let css = await fs.readFile(globalsPath, "utf8");
-      if (!css.includes("@custom-variant dark")) {
-        css = css.replace(
-          `@import "tailwindcss";\n`,
-          `@import "tailwindcss";\n\n@custom-variant dark (&:where(.dark, .dark *));\n`,
-        );
-        await fs.writeFile(globalsPath, css, "utf8");
+    if (options.styling === "tailwind") {
+      const globalsPath = path.join(projectDir, "src", "app", "globals.css");
+      if (await fs.pathExists(globalsPath)) {
+        let css = await fs.readFile(globalsPath, "utf8");
+        if (!css.includes("@custom-variant dark")) {
+          css = css.replace(
+            `@import "tailwindcss";\n`,
+            `@import "tailwindcss";\n\n@custom-variant dark (&:where(.dark, .dark *));\n`,
+          );
+          await fs.writeFile(globalsPath, css, "utf8");
+        }
       }
     }
 

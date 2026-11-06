@@ -85,9 +85,14 @@ async function promptCustomOptions(
         }),
       );
     }
+  }
+  if (styling === "tailwind" || styling === "mui") {
     darkMode = assertNotCancel(
       await p.confirm({
-        message: "Add dark mode (next-themes)?",
+        message:
+          styling === "mui"
+            ? "Add dark mode (next-themes ↔ MUI palette)?"
+            : "Add dark mode (next-themes)?",
         initialValue: base.darkMode,
       }),
     );

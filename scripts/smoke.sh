@@ -183,7 +183,26 @@ node "$ROOT/cli/dist/index.js" "$NAME_MUI" --yes --no-install \
 MUI="$OUT/$NAME_MUI"
 
 assert_file "$MUI/src/providers/mui-provider.tsx"
+assert_file "$MUI/src/theme/theme.ts"
+assert_file "$MUI/src/theme/theme-palette.ts"
+assert_file "$MUI/src/theme/theme-typography.ts"
+assert_file "$MUI/src/theme/theme-breakpoints.ts"
+assert_file "$MUI/src/theme/theme-components.ts"
+assert_file "$MUI/docs/style-guide/ui/mui.md"
+assert_grep "BreakpointOverrides" "$MUI/src/theme/theme.ts"
 assert_missing "$MUI/components.json"
+
+echo "==> Scaffold SmokeMuiDark (mui + darkMode sync)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeMuiDark" --yes --no-install \
+  --styling mui --dark-mode \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+
+MUIDARK="$OUT/SmokeMuiDark"
+assert_file "$MUIDARK/src/providers/theme-provider.tsx"
+assert_grep "next-themes" "$MUIDARK/src/providers/mui-provider.tsx"
+assert_grep "getPalette" "$MUIDARK/src/providers/mui-provider.tsx"
 
 echo "==> Scaffold $NAME_AUTH (jwt + seo + endpoints)"
 cd "$OUT"
@@ -254,6 +273,7 @@ STORE="$OUT/$NAME_STORE"
 assert_file "$STORE/src/stores/app-store.ts"
 assert_file "$STORE/.cursor/rules/store.mdc"
 assert_grep "zustand" "$STORE/package.json"
+assert_grep "persist" "$STORE/src/stores/app-store.ts"
 assert_grep "Client store: zustand" "$STORE/src/app/_components/welcome-card/index.tsx"
 assert_missing "$STORE/src/providers/store-provider.tsx"
 
@@ -266,11 +286,13 @@ REDUX="$OUT/SmokeRedux"
 
 assert_file "$REDUX/src/stores/store.ts"
 assert_file "$REDUX/src/stores/hooks.ts"
+assert_file "$REDUX/src/stores/slices/app-slice.ts"
 assert_file "$REDUX/src/providers/store-provider.tsx"
 assert_file "$REDUX/src/providers/app-providers.tsx"
 assert_grep "StoreProvider" "$REDUX/src/providers/app-providers.tsx"
 assert_grep "AppProviders" "$REDUX/src/app/layout.tsx"
 assert_grep "@reduxjs/toolkit" "$REDUX/package.json"
+assert_grep "makeStore" "$REDUX/src/stores/store.ts"
 assert_grep "Client store: redux" "$REDUX/src/app/_components/welcome-card/index.tsx"
 
 echo "==> Scaffold dashboard + dark mode"

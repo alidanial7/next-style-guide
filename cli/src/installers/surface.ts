@@ -170,7 +170,7 @@ function docsIndex(options: ScaffoldOptions): string {
     ]);
   }
   if (options.styling === "mui") {
-    rows.push(["MUI", "See `.cursor/rules/mui.mdc`"]);
+    rows.push(["[MUI](ui/mui.md)", "`src/theme/` + MuiProvider"]);
   }
   if (options.endpoints) {
     rows.push([

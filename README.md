@@ -98,7 +98,7 @@ my-app/
 | ✅ | Validation: `zod` / `yup` |
 | 🔑 | Auth: `none` / `jwt` / `authjs` |
 | 🗃️ | Client store: `none` / `zustand` / `redux` |
-| 🌙 | Dark mode (Tailwind + next-themes) |
+| 🌙 | Dark mode (next-themes; Tailwind \`dark:\` or MUI palette) |
 | ✨ | Icons: `none` / `lucide` / `tabler` |
 | 📡 | TanStack Query |
 | 🔌 | OpenAPI endpoints codegen |

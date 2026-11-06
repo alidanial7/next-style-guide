@@ -144,8 +144,12 @@ export function collectOptionWarnings(
   if (options.ui === "shadcn" && options.styling !== "tailwind") {
     warnings.push("shadcn requires Tailwind — ui forced to none.");
   }
-  if (options.darkMode && options.styling !== "tailwind") {
-    warnings.push("Dark mode requires Tailwind — disabled.");
+  if (
+    options.darkMode &&
+    options.styling !== "tailwind" &&
+    options.styling !== "mui"
+  ) {
+    warnings.push("Dark mode requires Tailwind or MUI — disabled.");
   }
   if (options.apiEnvelope && !options.endpoints) {
     warnings.push(

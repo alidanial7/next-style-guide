@@ -39,7 +39,7 @@ export type ScaffoldOptions = {
   icons: IconOption;
   validation: ValidationOption;
   i18n: boolean;
-  /** Tailwind dark mode via next-themes (requires styling=tailwind) */
+  /** Dark mode via next-themes (requires styling=tailwind | mui) */
   darkMode: boolean;
   /** Unwrap `{ result, status, success, messages }` API envelopes */
   apiEnvelope: boolean;
@@ -109,7 +109,11 @@ export function normalizeOptions<T extends ScaffoldOptions>(options: T): T {
   if (next.ui !== "shadcn") {
     next = { ...next, shadcnSet: "minimal" };
   }
-  if (next.styling !== "tailwind" && next.darkMode) {
+  if (
+    next.darkMode &&
+    next.styling !== "tailwind" &&
+    next.styling !== "mui"
+  ) {
     next = { ...next, darkMode: false };
   }
   if (next.playwright && !next.testing) {
