@@ -12,8 +12,10 @@ export function DirectionToggle() {
   const { direction, setDirection, toggleDirection } = useDirection();
 
   return (
-    <Stack spacing={1} sx={{ mt: 2 }}>
-      <Typography variant="subtitle2">Text direction (sample)</Typography>
+    <Stack spacing={1} sx={{ mt: 0 }}>
+      <Typography variant="subtitle2">
+        Direction (sample): {direction.toUpperCase()}
+      </Typography>
       <ButtonGroup size="small" variant="outlined">
         <Button
           variant={direction === "ltr" ? "contained" : "outlined"}

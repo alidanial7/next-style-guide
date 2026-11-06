@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 
+import { copyAddonFile } from "../helpers/addon-files.js";
 import { addDependencies } from "../helpers/package-json.js";
 import type { Installer } from "./types.js";
 
@@ -25,24 +26,52 @@ function ruleFor(styling: "tailwind" | "mui"): string {
       : "- Tailwind: use \`dark:\` variants; \`html\` gets \`class=\"dark\"\` from next-themes.";
   return `---
 description: Dark mode (next-themes)
-globs: src/providers/theme-provider.tsx,src/providers/mui-provider.tsx,src/app/globals.css
+globs: src/providers/theme-provider.tsx,src/providers/mui-provider.tsx,src/app/globals.css,src/app/_components/theme-toggle/**
 alwaysApply: false
 ---
 
 # Dark mode
 
 - \`ThemeProvider\` in \`src/providers/theme-provider.tsx\` (composed via \`AppProviders\`).
+- Homepage sample \`ThemeToggle\` under \`src/app/_components/theme-toggle/\` (not shared \`components/\`).
 ${extra}
 - Prefer \`defaultTheme="system"\`.
 `;
 }
 
+function darkModeEnabled(options: {
+  darkMode: boolean;
+  styling: string;
+}): boolean {
+  return (
+    options.darkMode &&
+    (options.styling === "tailwind" || options.styling === "mui")
+  );
+}
+
 export const darkModeInstaller: Installer = {
   id: "dark-mode",
-  active: (o) =>
-    o.darkMode && (o.styling === "tailwind" || o.styling === "mui"),
+  active: () => true,
   async run({ projectDir, options }) {
     const providersDir = path.join(projectDir, "src", "providers");
+    const toggleDir = path.join(
+      projectDir,
+      "src",
+      "app",
+      "_components",
+      "theme-toggle",
+    );
+
+    if (!darkModeEnabled(options)) {
+      await fs.remove(path.join(providersDir, "theme-provider.tsx"));
+      await fs.remove(toggleDir);
+      await fs.remove(path.join(projectDir, ".cursor", "rules", "dark-mode.mdc"));
+      await fs.remove(
+        path.join(projectDir, "docs", "style-guide", "ui", "dark-mode.md"),
+      );
+      return;
+    }
+
     await fs.ensureDir(providersDir);
     await fs.remove(path.join(providersDir, ".gitkeep"));
     await fs.writeFile(
@@ -50,6 +79,13 @@ export const darkModeInstaller: Installer = {
       THEME_PROVIDER,
       "utf8",
     );
+
+    await fs.ensureDir(toggleDir);
+    const toggleSeed =
+      options.styling === "mui"
+        ? "dark-mode/components/theme-toggle.mui.tsx"
+        : "dark-mode/components/theme-toggle.default.tsx";
+    await copyAddonFile(toggleSeed, path.join(toggleDir, "index.tsx"));
 
     const styling = options.styling === "mui" ? "mui" : "tailwind";
     await fs.writeFile(
@@ -64,11 +100,13 @@ export const darkModeInstaller: Installer = {
 
 next-themes + MUI palette swap in \`MuiProvider\`.
 Provider: \`src/providers/theme-provider.tsx\` (via \`AppProviders\`).
+Sample: \`src/app/_components/theme-toggle/\` on the home page.
 `
         : `# Dark mode
 
 next-themes + Tailwind \`dark:\` variants.
 Provider: \`src/providers/theme-provider.tsx\` (via \`AppProviders\`).
+Sample: \`src/app/_components/theme-toggle/\` on the home page.
 `;
 
     await fs.outputFile(

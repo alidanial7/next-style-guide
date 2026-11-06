@@ -214,6 +214,10 @@ node "$ROOT/cli/dist/index.js" "SmokeMuiDark" --yes --no-install \
 
 MUIDARK="$OUT/SmokeMuiDark"
 assert_file "$MUIDARK/src/providers/theme-provider.tsx"
+assert_file "$MUIDARK/src/app/_components/theme-toggle/index.tsx"
+assert_grep "ThemeToggle" "$MUIDARK/src/app/page.tsx"
+assert_grep "@/app/_components/theme-toggle" "$MUIDARK/src/app/page.tsx"
+assert_grep "@mui/material" "$MUIDARK/src/app/_components/theme-toggle/index.tsx"
 assert_grep "next-themes" "$MUIDARK/src/providers/mui-provider.tsx"
 assert_grep "getPalette" "$MUIDARK/src/providers/mui-provider.tsx"
 
@@ -230,7 +234,7 @@ assert_grep 'dir="rtl"' "$OUT/SmokeRtl/src/app/layout.tsx"
 
 cd "$OUT"
 node "$ROOT/cli/dist/index.js" "SmokeBoth" --yes --no-install \
-  --direction both --styling tailwind \
+  --direction both --styling tailwind --dark-mode \
   --no-endpoints --no-api-envelope --no-testing \
   --no-eslint --no-prettier --no-husky --no-ci
 assert_file "$OUT/SmokeBoth/src/providers/direction-provider.tsx"
@@ -239,6 +243,11 @@ assert_missing "$OUT/SmokeBoth/src/components/direction-toggle"
 assert_grep "DirectionToggle" "$OUT/SmokeBoth/src/app/page.tsx"
 assert_grep "@/app/_components/direction-toggle" "$OUT/SmokeBoth/src/app/page.tsx"
 assert_not_grep "DirectionToggle" "$OUT/SmokeBoth/src/app/_components/welcome-card/index.tsx"
+assert_file "$OUT/SmokeBoth/src/providers/theme-provider.tsx"
+assert_file "$OUT/SmokeBoth/src/app/_components/theme-toggle/index.tsx"
+assert_grep "ThemeToggle" "$OUT/SmokeBoth/src/app/page.tsx"
+assert_grep "sample-toolbar" "$OUT/SmokeBoth/src/app/page.tsx"
+assert_grep "sample-toolbar" "$OUT/SmokeBoth/src/app/globals.css"
 assert_grep "DirectionProvider" "$OUT/SmokeBoth/src/providers/app-providers.tsx"
 assert_grep 'dir="ltr"' "$OUT/SmokeBoth/src/app/layout.tsx"
 
@@ -261,6 +270,9 @@ assert_grep "stylis-plugin-rtl" "$OUT/SmokeMuiApp/package.json"
 assert_file "$OUT/SmokeMuiApp/src/app/_components/direction-toggle/index.tsx"
 assert_missing "$OUT/SmokeMuiApp/src/components/direction-toggle"
 assert_grep "@mui/material" "$OUT/SmokeMuiApp/src/app/_components/direction-toggle/index.tsx"
+assert_file "$OUT/SmokeMuiApp/src/app/_components/theme-toggle/index.tsx"
+assert_grep "ThemeToggle" "$OUT/SmokeMuiApp/src/app/page.tsx"
+assert_grep "@mui/material" "$OUT/SmokeMuiApp/src/app/_components/theme-toggle/index.tsx"
 
 echo "==> Scaffold $NAME_AUTH (jwt + seo + endpoints)"
 cd "$OUT"

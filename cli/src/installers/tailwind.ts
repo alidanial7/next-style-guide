@@ -17,12 +17,30 @@ const GLOBALS = `@import "tailwindcss";
 
 :root {
   color-scheme: light;
-  --background: #f6f4ef;
-  --foreground: #14201b;
-  --muted: #5b6b63;
-  --accent: #0b5fff;
+  --background: #f4f6f8;
+  --foreground: #12181f;
+  --muted: #5c6b7a;
+  --accent: #2563eb;
   --card: #ffffff;
-  --border: #d9e0db;
+  --border: #d8dee6;
+  --btn: #eef2f6;
+  --btn-active: #2563eb;
+  --btn-active-fg: #ffffff;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0b1220;
+  --foreground: #e8eef6;
+  --muted: #93a4b8;
+  --accent: #60a5fa;
+  --card: #121a27;
+  --border: #243246;
+  --btn: #1a2433;
+  --btn-active: #3b82f6;
+  --btn-active-fg: #ffffff;
+  --shadow: 0 1px 2px rgb(0 0 0 / 35%);
 }
 
 @theme inline {
@@ -42,7 +60,12 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: radial-gradient(circle at top left, #eef3ff, transparent 40%),
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 10% -10%,
+      color-mix(in srgb, var(--accent) 18%, transparent),
+      transparent 55%
+    ),
     var(--background);
   color: var(--foreground);
   font-family: ui-sans-serif, system-ui, sans-serif;
@@ -58,40 +81,99 @@ a:hover {
 }
 
 main {
-  width: min(720px, calc(100% - 2rem));
+  width: min(40rem, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 4rem 0 3rem;
+  padding: 3.5rem 0 3rem;
 }
 
 .hero {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .hero h1 {
   margin: 0;
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(1.85rem, 4.5vw, 2.65rem);
   letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .hero p {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
-  max-width: 40rem;
+  max-width: 36rem;
+}
+
+.sample-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.1rem;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.sample-toggle {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.sample-toggle__label {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.sample-toggle__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.sample-toggle__row button {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--btn);
+  color: var(--foreground);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sample-toggle__row button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.sample-toggle__row button.is-active {
+  background: var(--btn-active);
+  border-color: var(--btn-active);
+  color: var(--btn-active-fg);
+}
+
+.sample-toggle__row button:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .card {
-  margin-top: 2rem;
-  padding: 1.25rem 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1.15rem 1.35rem;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
+  box-shadow: var(--shadow);
 }
 
 .card h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 
 .card ul {
@@ -99,12 +181,18 @@ main {
   padding-left: 1.1rem;
   color: var(--muted);
   line-height: 1.7;
+  font-size: 0.9rem;
 }
 
 .meta {
-  margin-top: 2rem;
-  font-size: 0.875rem;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
   color: var(--muted);
+  line-height: 1.55;
+}
+
+code {
+  font-size: 0.86em;
 }
 `;
 

@@ -95,15 +95,32 @@ ${items}
 export function homePageSource(options: ScaffoldOptions): string {
   const uiBit =
     options.ui === "shadcn" ? " · ui=<code>shadcn</code>" : "";
+  const themeImport = options.darkMode
+    ? 'import { ThemeToggle } from "@/app/_components/theme-toggle";\n'
+    : "";
   const directionImport =
     options.direction === "both"
       ? 'import { DirectionToggle } from "@/app/_components/direction-toggle";\n'
       : "";
-  const directionSample =
-    options.direction === "both" ? "\n      <DirectionToggle />\n" : "";
+
+  const toolbarItems = [
+    options.darkMode ? "        <ThemeToggle />" : null,
+    options.direction === "both" ? "        <DirectionToggle />" : null,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
+
+  const toolbar =
+    toolbarItems.length > 0
+      ? `
+      <div className="sample-toolbar">
+${toolbarItems}
+      </div>
+`
+      : "";
 
   return `import { WelcomeCard } from "@/app/_components/welcome-card";
-${directionImport}
+${themeImport}${directionImport}
 export default function HomePage() {
   return (
     <>
@@ -116,9 +133,9 @@ export default function HomePage() {
           data=<code>${options.data}</code>.
         </p>
       </section>
-
+${toolbar}
       <WelcomeCard />
-${directionSample}
+
       <p className="meta">
         Read <code>AGENTS.md</code> and <code>docs/style-guide/</code> before
         adding routes. Feature rules in <code>.cursor/rules/</code> load by glob.

@@ -7,15 +7,23 @@ export function DirectionToggle() {
   const { direction, setDirection, toggleDirection } = useDirection();
 
   return (
-    <div className="direction-toggle" style={{ marginTop: "1rem" }}>
-      <p className="meta" style={{ marginBottom: "0.5rem" }}>
-        Text direction (sample): <strong>{direction.toUpperCase()}</strong>
+    <div className="sample-toggle">
+      <p className="sample-toggle__label">
+        Direction (sample): <strong>{direction.toUpperCase()}</strong>
       </p>
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        <button type="button" onClick={() => setDirection("ltr")}>
+      <div className="sample-toggle__row">
+        <button
+          type="button"
+          className={direction === "ltr" ? "is-active" : undefined}
+          onClick={() => setDirection("ltr")}
+        >
           LTR
         </button>
-        <button type="button" onClick={() => setDirection("rtl")}>
+        <button
+          type="button"
+          className={direction === "rtl" ? "is-active" : undefined}
+          onClick={() => setDirection("rtl")}
+        >
           RTL
         </button>
         <button type="button" onClick={toggleDirection}>
