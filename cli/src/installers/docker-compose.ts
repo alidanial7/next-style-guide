@@ -44,7 +44,7 @@ alwaysApply: false
 
 export const dockerComposeInstaller: Installer = {
   id: "docker-compose",
-  active: (o) => o.auth === "jwt" && o.endpoints,
+  active: (o) => o.dockerCompose && o.auth === "jwt" && o.endpoints,
   async run({ projectDir }) {
     await fs.writeFile(
       path.join(projectDir, "docker-compose.yml"),

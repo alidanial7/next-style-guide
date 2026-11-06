@@ -6,14 +6,17 @@ import {
 } from "../helpers/app-providers.js";
 
 /**
- * Compose client providers into `app-providers.tsx` and wire root layout once.
+ * Compose client providers (when needed) and always wire root layout
+ * (`dir` / lang / AppProviders) so fixed RTL is not skipped.
  * Runs after leaf provider installers; before surface.
  */
 export const appProvidersInstaller: Installer = {
   id: "app-providers",
-  active: (o) => needsAppProviders(o) || o.i18n || o.darkMode,
+  active: () => true,
   async run({ projectDir, options }) {
-    await writeAppProviders(projectDir, options);
+    if (needsAppProviders(options)) {
+      await writeAppProviders(projectDir, options);
+    }
     await wireRootLayout(projectDir, options);
   },
 };

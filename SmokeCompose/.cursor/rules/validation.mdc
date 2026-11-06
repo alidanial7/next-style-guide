@@ -1,0 +1,12 @@
+---
+description: Zod validation conventions
+globs: src/lib/env.ts,src/lib/validations/**,src/**/*schema*.{ts,tsx}
+alwaysApply: false
+---
+
+# Validation (zod)
+
+- Public env: `src/lib/env.ts` (zod schema).
+- Domain schemas: `src/lib/validations/<name>.ts`.
+- Forms: use `zodResolver` from `@hookform/resolvers`.
+- Prefer one library — do not mix Zod and Yup in the same app.

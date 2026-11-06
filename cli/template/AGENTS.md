@@ -6,10 +6,12 @@ Generated from [next-style-guide](https://github.com/alidanial7/next-style-guide
 
 Stack-wide → here. Feature detail → `.cursor/rules/*.mdc` (glob-scoped — only load when editing matching files). Don't re-read this file mid-task.
 
+When you change an app convention, **update the matching `.cursor/rules/*.mdc` and `docs/style-guide/` pages** in the same change so agents do not follow stale guidance.
+
 ## Stack
 
-App Router · TS strict · Zod/Yup env (`src/lib/env.ts`) · __PACKAGE_MANAGER__.
-Optional features (Query, store, endpoints, i18n, SEO, tests, Docker, CI, …) exist only when enabled at scaffold.
+App Router · TS strict · public env via `src/lib/env.ts` · direction via `useDirection()` · __PACKAGE_MANAGER__.
+Optional features (validation lib, Query, store, endpoints, i18n, SEO, dark mode, Compose, deploy, tests, CI, …) exist only when enabled at scaffold — see WelcomeCard / `docs/style-guide/README.md`.
 
 ## Do
 
@@ -21,12 +23,13 @@ Optional features (Query, store, endpoints, i18n, SEO, tests, Docker, CI, …) e
 - Named exports `function Foo()`; default only for Next route files.
 - Prefer Server Components; `"use client"` only when needed.
 - Single `<main>` in root layout — never nest `<main>` in pages/components.
+- Text direction: use `useDirection()` from `@/hooks/use-direction` (do not hardcode `dir` ad hoc).
 
 ## Don't
 
 - Park single-route UI in `src/components/`.
 - Flat files in `_components/` (use `<name>/index.tsx`).
-- Invent a second folder convention without updating this file + `docs/style-guide/`.
+- Invent a second folder convention without updating this file + matching `.cursor/rules/*.mdc` + `docs/style-guide/`.
 - Auto `git commit` / `git push` — leave that to the developer.
 
 ## Read when needed

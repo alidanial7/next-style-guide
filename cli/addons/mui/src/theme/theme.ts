@@ -16,9 +16,11 @@ declare module "@mui/material/styles" {
   }
 }
 
-/** Shared theme options (LTR). Compose palette per mode in `MuiProvider`. */
+/**
+ * Shared theme options. `direction` is applied in `MuiProvider`
+ * (fixed ltr/rtl or from `useDirection` when scaffolded with `both`).
+ */
 const themeOptions: ThemeOptions = {
-  direction: "ltr",
   palette: getPalette("light"),
   breakpoints: themeBreakpoints,
   typography: themeTypography,

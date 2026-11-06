@@ -1,5 +1,5 @@
 ---
-description: RHF + Zod forms aligned to API body types
+description: RHF forms aligned to API body types (seed; replaced by validation installer)
 globs: src/**/*form*/**,src/**/*-form*/**,src/**/*.form.tsx,src/components/forms/**,src/lib/**/*form*.ts,src/lib/validations/**
 alwaysApply: false
 ---
@@ -8,7 +8,7 @@ alwaysApply: false
 
 - `"use client"` + named exports. `page.tsx` stays server when metadata-only.
 - Placement: shared → `src/components/forms/<name>/`; one route → `src/app/<route>/_components/forms/<name>/`.
-- RHF + `Controller` + Zod `zodResolver`. Schema `satisfies z.ZodType<*Body>` when endpoints codegen exists; field names = API keys.
+- RHF + `Controller`. Prefer scaffold validation lib resolvers when Zod/Yup is enabled; field names = API keys when endpoints codegen exists.
 - Reuse `Field*` / `Input` / `Select` / shared controls — no ad-hoc inputs.
 - Required: derive from schema / `*Body`; use `required` on Field/Label (no handmade `*` / "(optional)" text).
 - Invalid: `data-invalid`, `aria-invalid`, `FieldError`.

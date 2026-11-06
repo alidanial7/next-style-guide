@@ -4,6 +4,7 @@ import { authAuthjsInstaller } from "./auth-authjs.js";
 import { authJwtInstaller } from "./auth-jwt.js";
 import { ciInstaller } from "./ci.js";
 import { darkModeInstaller } from "./dark-mode.js";
+import { directionInstaller } from "./direction.js";
 import { dockerComposeInstaller } from "./docker-compose.js";
 import { dockerInstaller } from "./docker.js";
 import { endpointsInstaller } from "./endpoints.js";
@@ -38,6 +39,7 @@ export const installers: Installer[] = [
   authAuthjsInstaller,
   tailwindInstaller,
   darkModeInstaller,
+  directionInstaller,
   muiInstaller,
   shadcnInstaller,
   validationInstaller,

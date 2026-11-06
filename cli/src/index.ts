@@ -18,6 +18,7 @@ import {
   normalizeOptions,
   type AuthOption,
   type DeployOption,
+  type DirectionOption,
   type IconOption,
   type PackageManager,
   type ScaffoldOptions,
@@ -29,18 +30,20 @@ import {
 
 const ICON_VALUES = new Set<IconOption>(["none", "lucide", "tabler"]);
 const STYLING_VALUES = new Set<StylingOption>(["none", "tailwind", "mui"]);
-const VALIDATION_VALUES = new Set<ValidationOption>(["zod", "yup"]);
+const VALIDATION_VALUES = new Set<ValidationOption>(["none", "zod", "yup"]);
 const AUTH_VALUES = new Set<AuthOption>(["none", "jwt", "authjs"]);
 const STORE_VALUES = new Set<StoreOption>(["none", "zustand", "redux"]);
 const PM_VALUES = new Set<PackageManager>(["pnpm", "npm", "yarn"]);
 const SHADCN_SET_VALUES = new Set<ShadcnSetOption>(["minimal", "starter"]);
 const DEPLOY_VALUES = new Set<DeployOption>(["none", "vercel", "docker"]);
+const DIRECTION_VALUES = new Set<DirectionOption>(["ltr", "rtl", "both"]);
 const PRESET_VALUES = new Set<PresetId>([
   "custom",
   "minimal",
   "api-app",
   "marketing",
   "dashboard",
+  "mui-app",
 ]);
 
 type FlagBag = {
@@ -62,9 +65,11 @@ type FlagBag = {
   tanstackQuery?: boolean;
   endpoints?: boolean;
   apiEnvelope?: boolean;
+  dockerCompose?: boolean;
   seo?: boolean;
   i18n?: boolean;
   darkMode?: boolean;
+  direction?: DirectionOption;
   testing?: boolean;
   playwright?: boolean;
   eslint?: boolean;
@@ -155,6 +160,7 @@ function parseArgs(argv: string[]): FlagBag {
       ["tanstackQuery", "--tanstack-query", "--no-tanstack-query"],
       ["endpoints", "--endpoints", "--no-endpoints"],
       ["apiEnvelope", "--api-envelope", "--no-api-envelope"],
+      ["dockerCompose", "--docker-compose", "--no-docker-compose"],
       ["seo", "--seo", "--no-seo"],
       ["i18n", "--i18n", "--no-i18n"],
       ["darkMode", "--dark-mode", "--no-dark-mode"],
@@ -244,6 +250,12 @@ function parseArgs(argv: string[]): FlagBag {
       i = deploy.nextIndex;
       continue;
     }
+    const direction = readChoice(arg, "--direction", DIRECTION_VALUES, args, i);
+    if (direction) {
+      out.direction = direction.value;
+      i = direction.nextIndex;
+      continue;
+    }
     // Back-compat aliases
     if (arg === "--docker") {
       out.deploy = "docker";
@@ -277,19 +289,21 @@ Usage:
 Options:
   --yes, -y
   --no-install
-  --preset minimal|api-app|marketing|dashboard|custom
+  --preset minimal|api-app|marketing|dashboard|mui-app|custom
   --pm, --package-manager pnpm|npm|yarn
   --store none|zustand|redux
   --styling none|tailwind|mui
   --shadcn | --no-shadcn
   --shadcn-set minimal|starter
+  --direction ltr|rtl|both
   --dark-mode | --no-dark-mode
-  --validation zod|yup
+  --validation none|zod|yup
   --auth none|jwt|authjs
   --icons none|lucide|tabler
   --tanstack-query | --no-tanstack-query
   --endpoints | --no-endpoints
   --api-envelope | --no-api-envelope
+  --docker-compose | --no-docker-compose
   --seo | --no-seo
   --i18n | --no-i18n
   --testing | --no-testing
@@ -332,9 +346,13 @@ function applyFlagOverrides(
   }
   if (flags.endpoints !== undefined) next.endpoints = flags.endpoints;
   if (flags.apiEnvelope !== undefined) next.apiEnvelope = flags.apiEnvelope;
+  if (flags.dockerCompose !== undefined) {
+    next.dockerCompose = flags.dockerCompose;
+  }
   if (flags.seo !== undefined) next.seo = flags.seo;
   if (flags.i18n !== undefined) next.i18n = flags.i18n;
   if (flags.darkMode !== undefined) next.darkMode = flags.darkMode;
+  if (flags.direction !== undefined) next.direction = flags.direction;
   if (flags.testing !== undefined) next.testing = flags.testing;
   if (flags.playwright !== undefined) next.playwright = flags.playwright;
   if (flags.eslint !== undefined) next.eslint = flags.eslint;
@@ -342,7 +360,7 @@ function applyFlagOverrides(
   if (flags.husky !== undefined) next.husky = flags.husky;
   if (flags.deploy !== undefined) next.deploy = flags.deploy;
   if (flags.ci !== undefined) next.ci = flags.ci;
-  return normalizeOptions(next);
+  return next;
 }
 
 async function main(): Promise<void> {
@@ -381,7 +399,7 @@ async function main(): Promise<void> {
         flags.preset ? `preset=${flags.preset}` : null,
         `pm=${options.packageManager}`,
         `styling=${options.styling} ui=${options.ui}${options.ui === "shadcn" ? `:${options.shadcnSet}` : ""} auth=${options.auth} store=${options.store}`,
-        `deploy=${options.deploy} endpoints=${options.endpoints} seo=${options.seo} i18n=${options.i18n} testing=${options.testing}`,
+        `dir=${options.direction} deploy=${options.deploy} endpoints=${options.endpoints} seo=${options.seo} i18n=${options.i18n} testing=${options.testing}`,
       ]
         .filter(Boolean)
         .join(" · "),
@@ -396,6 +414,7 @@ async function main(): Promise<void> {
   for (const warning of warnings) {
     p.log.warn(warning);
   }
+  options = normalizeOptions(options);
 
   const projectDir = await scaffold(options);
   const pm = getPackageManager(options.packageManager);

@@ -204,6 +204,48 @@ assert_file "$MUIDARK/src/providers/theme-provider.tsx"
 assert_grep "next-themes" "$MUIDARK/src/providers/mui-provider.tsx"
 assert_grep "getPalette" "$MUIDARK/src/providers/mui-provider.tsx"
 
+echo "==> Scaffold direction rtl + both + mui-app"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeRtl" --yes --no-install \
+  --styling mui --direction rtl \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+assert_file "$OUT/SmokeRtl/src/hooks/use-direction.ts"
+assert_grep 'direction: "rtl"' "$OUT/SmokeRtl/src/hooks/use-direction.ts"
+assert_grep "stylis-plugin-rtl" "$OUT/SmokeRtl/package.json"
+assert_grep 'dir="rtl"' "$OUT/SmokeRtl/src/app/layout.tsx"
+
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeBoth" --yes --no-install \
+  --direction both --styling tailwind \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+assert_file "$OUT/SmokeBoth/src/providers/direction-provider.tsx"
+assert_file "$OUT/SmokeBoth/src/components/direction-toggle/index.tsx"
+assert_grep "DirectionToggle" "$OUT/SmokeBoth/src/app/page.tsx"
+assert_not_grep "DirectionToggle" "$OUT/SmokeBoth/src/app/_components/welcome-card/index.tsx"
+assert_grep "DirectionProvider" "$OUT/SmokeBoth/src/providers/app-providers.tsx"
+assert_grep 'dir="ltr"' "$OUT/SmokeBoth/src/app/layout.tsx"
+
+echo "==> Scaffold SmokeRtlOnly (rtl without MUI — layout still gets dir)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeRtlOnly" --yes --no-install \
+  --direction rtl \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+assert_grep 'dir="rtl"' "$OUT/SmokeRtlOnly/src/app/layout.tsx"
+assert_file "$OUT/SmokeRtlOnly/src/hooks/use-direction.ts"
+assert_missing "$OUT/SmokeRtlOnly/src/providers/app-providers.tsx"
+
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeMuiApp" --yes --no-install --preset mui-app \
+  --no-husky --no-testing --no-eslint --no-prettier --no-ci
+assert_file "$OUT/SmokeMuiApp/src/theme/theme.ts"
+assert_file "$OUT/SmokeMuiApp/src/providers/direction-provider.tsx"
+assert_grep "stylis-plugin-rtl" "$OUT/SmokeMuiApp/package.json"
+assert_grep "DirectionToggle" "$OUT/SmokeMuiApp/src/components/direction-toggle/index.tsx"
+assert_grep "@mui/material" "$OUT/SmokeMuiApp/src/components/direction-toggle/index.tsx"
+
 echo "==> Scaffold $NAME_AUTH (jwt + seo + endpoints)"
 cd "$OUT"
 node "$ROOT/cli/dist/index.js" "$NAME_AUTH" --yes --no-install \
@@ -224,6 +266,36 @@ assert_file "$AUTH/src/app/robots.ts"
 assert_file "$AUTH/.cursor/rules/seo.mdc"
 assert_grep "Auth: jwt" "$AUTH/src/app/_components/welcome-card/index.tsx"
 assert_grep "SEO helpers" "$AUTH/src/app/_components/welcome-card/index.tsx"
+assert_missing "$AUTH/docker-compose.yml"
+
+echo "==> Scaffold SmokeCompose (jwt + endpoints + compose opt-in)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeCompose" --yes --no-install \
+  --auth jwt --endpoints --docker-compose \
+  --no-testing --no-eslint --no-prettier --no-husky --no-ci
+assert_file "$OUT/SmokeCompose/docker-compose.yml"
+assert_file "$OUT/SmokeCompose/.cursor/rules/docker-compose.mdc"
+
+echo "==> Scaffold SmokeNoValidation (validation=none)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeNoValidation" --yes --no-install \
+  --validation none \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+assert_not_grep '"zod"' "$OUT/SmokeNoValidation/package.json"
+assert_missing "$OUT/SmokeNoValidation/.cursor/rules/validation.mdc"
+assert_file "$OUT/SmokeNoValidation/docs/style-guide/validation/none.md"
+assert_grep "NEXT_PUBLIC_APP_URL" "$OUT/SmokeNoValidation/src/lib/env.ts"
+assert_not_grep "from \"zod\"" "$OUT/SmokeNoValidation/src/lib/env.ts"
+
+echo "==> Scaffold SmokeShadcnIcons (shadcn forces lucide when icons omitted)"
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeShadcnIcons" --yes --no-install \
+  --styling tailwind --shadcn --icons none \
+  --no-endpoints --no-api-envelope --no-testing \
+  --no-eslint --no-prettier --no-husky --no-ci
+assert_grep "lucide-react" "$OUT/SmokeShadcnIcons/package.json"
+assert_grep "Icons: lucide" "$OUT/SmokeShadcnIcons/src/app/_components/welcome-card/index.tsx"
 
 echo "==> Scaffold $NAME_AUTHJS (Auth.js)"
 cd "$OUT"
@@ -419,6 +491,12 @@ assert_file "$OUT/SmokeApi/src/providers/app-providers.tsx"
 assert_file "$OUT/SmokeApi/src/components/ui/dialog.tsx"
 assert_missing "$OUT/SmokeApi/vercel.json"
 assert_missing "$OUT/SmokeApi/docker/production.Dockerfile"
+
+cd "$OUT"
+node "$ROOT/cli/dist/index.js" "SmokeApiNoCompose" --yes --no-install --preset api-app \
+  --no-docker-compose --no-husky --no-testing --no-eslint --no-prettier --no-ci
+assert_missing "$OUT/SmokeApiNoCompose/docker-compose.yml"
+
 run_build "$OUT/SmokeApi" "pnpm build (api-app)" "pnpm build"
 
 echo

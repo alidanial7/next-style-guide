@@ -11,12 +11,14 @@ export type UiOption = "none" | "shadcn";
 export type ShadcnSetOption = "minimal" | "starter";
 export type DataOption = "rsc" | "tanstack-query";
 export type IconOption = "none" | "lucide" | "tabler";
-export type ValidationOption = "zod" | "yup";
+export type ValidationOption = "none" | "zod" | "yup";
 /** Client global state — opt-in */
 export type StoreOption = "none" | "zustand" | "redux";
 export type PackageManager = "pnpm" | "npm" | "yarn";
 /** Production deploy target */
 export type DeployOption = "none" | "vercel" | "docker";
+/** Document / UI text direction */
+export type DirectionOption = "ltr" | "rtl" | "both";
 
 export type ScaffoldOptions = {
   /** Display name (UI / tokens). When scaffolding with `.`, this is the cwd basename. */
@@ -39,12 +41,19 @@ export type ScaffoldOptions = {
   icons: IconOption;
   validation: ValidationOption;
   i18n: boolean;
+  /** ltr · rtl · both (runtime toggle + sample UI when both) */
+  direction: DirectionOption;
   /** Dark mode via next-themes (requires styling=tailwind | mui) */
   darkMode: boolean;
   /** Unwrap `{ result, status, success, messages }` API envelopes */
   apiEnvelope: boolean;
   /** OpenAPI → `src/endpoints` codegen + axios helpers */
   endpoints: boolean;
+  /**
+   * Local Docker Compose API stub (only when auth=jwt + endpoints).
+   * Separate from production `deploy=docker`.
+   */
+  dockerCompose: boolean;
   /** SEO helpers: public-routes, sitemap, robots */
   seo: boolean;
   /** Enhanced ESLint (import sort, func-style, jsx-sort-props) */
@@ -76,10 +85,12 @@ export const DEFAULT_OPTIONS: Omit<ScaffoldOptions, "name" | "slug"> = {
   icons: "none",
   validation: "zod",
   i18n: false,
+  direction: "ltr",
   darkMode: false,
   /** Neutral base — enable via preset / flags when building an API client app */
   apiEnvelope: false,
   endpoints: false,
+  dockerCompose: false,
   seo: false,
   eslint: true,
   prettier: true,
@@ -109,6 +120,10 @@ export function normalizeOptions<T extends ScaffoldOptions>(options: T): T {
   if (next.ui !== "shadcn") {
     next = { ...next, shadcnSet: "minimal" };
   }
+  // shadcn primitives depend on lucide (or an explicit tabler override).
+  if (next.ui === "shadcn" && next.icons === "none") {
+    next = { ...next, icons: "lucide" };
+  }
   if (
     next.darkMode &&
     next.styling !== "tailwind" &&
@@ -118,6 +133,9 @@ export function normalizeOptions<T extends ScaffoldOptions>(options: T): T {
   }
   if (next.playwright && !next.testing) {
     next = { ...next, testing: true };
+  }
+  if (next.dockerCompose && !(next.auth === "jwt" && next.endpoints)) {
+    next = { ...next, dockerCompose: false };
   }
 
   return next;

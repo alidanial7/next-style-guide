@@ -24,6 +24,9 @@ function stackLines(options: ScaffoldOptions): string[] {
       ? "No client store"
       : `Client store: ${options.store}`,
     options.darkMode ? "Dark mode (next-themes)" : "No dark mode",
+    options.direction === "both"
+      ? "Direction: both (runtime toggle)"
+      : `Direction: ${options.direction}`,
     options.seo ? "SEO helpers (sitemap/robots)" : "No SEO helpers",
     options.data === "tanstack-query"
       ? "TanStack Query enabled"
@@ -32,6 +35,9 @@ function stackLines(options: ScaffoldOptions): string[] {
     options.endpoints
       ? `OpenAPI endpoints codegen (\`${options.packageManager} endpoints:generate\`)`
       : "No endpoints codegen",
+    options.dockerCompose
+      ? "Docker Compose local API stub"
+      : null,
     options.apiEnvelope ? "API envelope unwrap" : "No envelope unwrap",
     options.i18n ? "i18n (next-intl)" : "No i18n",
     options.testing
@@ -59,6 +65,12 @@ function welcomeCardSource(options: ScaffoldOptions): string {
     .map((line) => `        <li>${escapeJsx(line)}</li>`)
     .join("\n");
 
+  const directionHint =
+    options.direction !== "ltr"
+      ? ' · direction via <code>useDirection()</code>'
+      : "";
+
+  // Keep WelcomeCard free of client hooks so Vitest SSR smoke stays valid.
   return `/** Homepage sample — reflects scaffold choices; replace with real UI. */
 export function WelcomeCard() {
   return (
@@ -69,7 +81,7 @@ ${items}
       </ul>
       <p className="meta" style={{ marginTop: "1rem" }}>
         Route UI → <code>src/app/&lt;route&gt;/_components/</code> · shared →{" "}
-        <code>src/components/</code>
+        <code>src/components/</code>${directionHint}
       </p>
     </div>
   );
@@ -84,9 +96,15 @@ function escapeJsx(text: string): string {
 function homePageSource(options: ScaffoldOptions): string {
   const uiBit =
     options.ui === "shadcn" ? " · ui=<code>shadcn</code>" : "";
+  const directionImport =
+    options.direction === "both"
+      ? 'import { DirectionToggle } from "@/components/direction-toggle";\n'
+      : "";
+  const directionSample =
+    options.direction === "both" ? "\n      <DirectionToggle />\n" : "";
 
   return `import { WelcomeCard } from "@/app/_components/welcome-card";
-
+${directionImport}
 export default function HomePage() {
   return (
     <>
@@ -101,7 +119,7 @@ export default function HomePage() {
       </section>
 
       <WelcomeCard />
-
+${directionSample}
       <p className="meta">
         Read <code>AGENTS.md</code> and <code>docs/style-guide/</code> before
         adding routes. Feature rules in <code>.cursor/rules/</code> load by glob.
@@ -123,7 +141,9 @@ function docsIndex(options: ScaffoldOptions): string {
     ["[HTTP client](http/client.md)", "`apiFetch` helper"],
     [
       `[Validation](validation/${options.validation}.md)`,
-      options.validation.toUpperCase(),
+      options.validation === "none"
+        ? "plain env helpers"
+        : options.validation.toUpperCase(),
     ],
   ];
 
@@ -142,7 +162,13 @@ function docsIndex(options: ScaffoldOptions): string {
   if (options.darkMode) {
     rows.push(["[Dark mode](ui/dark-mode.md)", "next-themes"]);
   }
-  if (options.auth === "jwt" && options.endpoints) {
+  rows.push([
+    "[Direction](ui/direction.md)",
+    options.direction === "both"
+      ? "ltr ↔ rtl + useDirection"
+      : `fixed ${options.direction}`,
+  ]);
+  if (options.dockerCompose) {
     rows.push([
       "[Docker Compose](ops/docker-compose.md)",
       "local API stub",

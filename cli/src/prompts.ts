@@ -14,6 +14,7 @@ import {
   normalizeOptions,
   type AuthOption,
   type DeployOption,
+  type DirectionOption,
   type IconOption,
   type PackageManager,
   type ScaffoldOptions,
@@ -98,22 +99,66 @@ async function promptCustomOptions(
     );
   }
 
+  const direction = assertNotCancel(
+    await p.select({
+      message: "Text direction?",
+      options: [
+        {
+          value: "ltr" satisfies DirectionOption,
+          label: "LTR only",
+          hint: "dir=ltr",
+        },
+        {
+          value: "rtl" satisfies DirectionOption,
+          label: "RTL only",
+          hint: "dir=rtl · MUI stylis RTL when applicable",
+        },
+        {
+          value: "both" satisfies DirectionOption,
+          label: "Both (toggle)",
+          hint: "runtime switch + sample UI · hook useDirection",
+        },
+      ],
+      initialValue: base.direction,
+    }),
+  );
+
   const icons = assertNotCancel(
     await p.select({
       message: "Icon library?",
-      options: [
-        { value: "none" satisfies IconOption, label: "None" },
-        { value: "lucide" satisfies IconOption, label: "Lucide" },
-        { value: "tabler" satisfies IconOption, label: "Tabler" },
-      ],
-      initialValue: base.icons,
+      options:
+        ui === "shadcn"
+          ? [
+              {
+                value: "lucide" as const,
+                label: "Lucide",
+                hint: "required default for shadcn",
+              },
+              { value: "tabler" as const, label: "Tabler" },
+            ]
+          : [
+              { value: "none" as const, label: "None" },
+              { value: "lucide" as const, label: "Lucide" },
+              { value: "tabler" as const, label: "Tabler" },
+            ],
+      initialValue:
+        ui === "shadcn"
+          ? base.icons === "tabler"
+            ? ("tabler" as const)
+            : ("lucide" as const)
+          : base.icons,
     }),
-  );
+  ) as IconOption;
 
   const validation = assertNotCancel(
     await p.select({
       message: "Validation library?",
       options: [
+        {
+          value: "none" satisfies ValidationOption,
+          label: "None",
+          hint: "plain env helpers",
+        },
         { value: "zod" satisfies ValidationOption, label: "Zod" },
         { value: "yup" satisfies ValidationOption, label: "Yup" },
       ],
@@ -200,6 +245,16 @@ async function promptCustomOptions(
       initialValue: base.auth,
     }),
   );
+
+  let dockerCompose = false;
+  if (auth === "jwt" && endpoints) {
+    dockerCompose = assertNotCancel(
+      await p.confirm({
+        message: "Add Docker Compose local API stub?",
+        initialValue: base.dockerCompose,
+      }),
+    );
+  }
 
   const seo = assertNotCancel(
     await p.confirm({
@@ -290,6 +345,7 @@ async function promptCustomOptions(
     ui,
     shadcnSet,
     darkMode,
+    direction,
     icons,
     validation,
     data: useTanstackQuery ? "tanstack-query" : "rsc",
@@ -297,6 +353,7 @@ async function promptCustomOptions(
     endpoints,
     apiEnvelope,
     auth,
+    dockerCompose,
     seo,
     i18n,
     testing,
@@ -375,6 +432,11 @@ export async function runPrompts(
           hint: describePreset("dashboard"),
         },
         {
+          value: "mui-app" as const,
+          label: "MUI app",
+          hint: describePreset("mui-app"),
+        },
+        {
           value: "custom" as const,
           label: "Custom",
           hint: "answer every question",
@@ -404,19 +466,19 @@ export async function runPrompts(
     }
   }
 
-  const draft = normalizeOptions({
+  const draftRaw = {
     name: name.trim(),
     slug,
     outDir,
     ...optionSeed,
     packageManager,
     noInstall: false,
-  });
-
-  const warnings = collectOptionWarnings(draft);
+  };
+  const warnings = collectOptionWarnings(draftRaw);
   if (warnings.length) {
     p.log.warn(warnings.join("\n"));
   }
+  const draft = normalizeOptions(draftRaw);
 
   const confirmed = assertNotCancel(
     await p.confirm({

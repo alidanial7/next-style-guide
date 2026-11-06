@@ -111,7 +111,8 @@ export async function runUpgrade(options: {
       apply
         ? "Applied template agent surface."
         : "Re-run with --apply to write differs/missing files.",
-      "Feature rules (.cursor/rules/* beyond core/components/forms) are not overwritten — re-scaffold options or copy manually.",
+      "Only AGENTS.md + core/components/forms rules are synced.",
+      "Theme (src/theme), stores, direction hooks, and feature .cursor/rules are not overwritten — re-scaffold or copy from a fresh app.",
     ].join("\n"),
     "Summary",
   );

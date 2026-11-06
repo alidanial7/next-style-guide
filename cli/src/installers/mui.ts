@@ -3,44 +3,132 @@ import path from "node:path";
 
 import { ADDONS_DIR } from "../constants.js";
 import { addDependencies } from "../helpers/package-json.js";
+import type { ScaffoldOptions } from "../types.js";
+import { needsRtlEmotion } from "./direction.js";
 import type { Installer } from "./types.js";
 
-const PROVIDER_LIGHT = `"use client";
+function muiProviderSource(options: ScaffoldOptions): string {
+  const dark = options.darkMode;
+  const rtlCapable = needsRtlEmotion(options);
+  const fixedRtl = options.direction === "rtl";
+  const both = options.direction === "both";
 
-import type { ReactNode } from "react";
+  const imports = [
+    `"use client";`,
+    ``,
+    dark || both
+      ? `import { useEffect, useMemo, useState, type ReactNode } from "react";`
+      : `import type { ReactNode } from "react";`,
+    ``,
+    `import CssBaseline from "@mui/material/CssBaseline";`,
+    `import { createTheme, ThemeProvider } from "@mui/material/styles";`,
+    `import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";`,
+  ];
 
-import CssBaseline from "@mui/material/CssBaseline";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+  if (dark) {
+    imports.push(`import { useTheme } from "next-themes";`);
+  }
+  if (both) {
+    imports.push(`import { useDirection } from "@/hooks/use-direction";`);
+  }
+  if (rtlCapable) {
+    imports.push(`import { prefixer } from "stylis";`);
+    imports.push(`import rtlPlugin from "stylis-plugin-rtl";`);
+  }
 
-import themeOptions from "@/theme/theme";
+  imports.push(``);
+  imports.push(`import themeOptions from "@/theme/theme";`);
+  if (dark) {
+    imports.push(`import getPalette from "@/theme/theme-palette";`);
+  }
 
-const theme = createTheme(themeOptions);
+  let body: string;
 
+  if (both && dark) {
+    body = `
 export function MuiProvider({ children }: { children: ReactNode }) {
+  const { resolvedTheme } = useTheme();
+  const { direction, isRtl } = useDirection();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const theme = useMemo(() => {
+    const mode =
+      mounted && resolvedTheme === "dark" ? ("dark" as const) : ("light" as const);
+    return createTheme({
+      ...themeOptions,
+      direction,
+      palette: getPalette(mode),
+    });
+  }, [mounted, resolvedTheme, direction]);
+
+  // key swap remounts MUI subtree on LTR↔RTL (needed for stylis plugin change).
   return (
-    <AppRouterCacheProvider>
+    <AppRouterCacheProvider
+      key={isRtl ? "mui-rtl" : "mui-ltr"}
+      options={
+        isRtl
+          ? { key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }
+          : { key: "mui-ltr" }
+      }
+    >
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {children}
+        <div className={theme.palette.mode} dir={direction}>
+          {children}
+        </div>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );
 }
 `;
+  } else if (both) {
+    body = `
+export function MuiProvider({ children }: { children: ReactNode }) {
+  const { direction, isRtl } = useDirection();
 
-const PROVIDER_DARK = `"use client";
+  const theme = useMemo(
+    () =>
+      createTheme({
+        ...themeOptions,
+        direction,
+      }),
+    [direction],
+  );
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-
-import CssBaseline from "@mui/material/CssBaseline";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import { useTheme } from "next-themes";
-
-import themeOptions from "@/theme/theme";
-import getPalette from "@/theme/theme-palette";
-
+  // key swap remounts MUI subtree on LTR↔RTL (needed for stylis plugin change).
+  return (
+    <AppRouterCacheProvider
+      key={isRtl ? "mui-rtl" : "mui-ltr"}
+      options={
+        isRtl
+          ? { key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }
+          : { key: "mui-ltr" }
+      }
+    >
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <div dir={direction}>{children}</div>
+      </ThemeProvider>
+    </AppRouterCacheProvider>
+  );
+}
+`;
+  } else if (dark) {
+    const dir = fixedRtl ? "rtl" : "ltr";
+    const cache = fixedRtl
+      ? `
+    <AppRouterCacheProvider
+      key="mui-rtl"
+      options={{ key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }}
+    >`
+      : `
+    <AppRouterCacheProvider>`;
+    const cacheClose = `    </AppRouterCacheProvider>`;
+    body = `
 export function MuiProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -54,20 +142,69 @@ export function MuiProvider({ children }: { children: ReactNode }) {
       mounted && resolvedTheme === "dark" ? ("dark" as const) : ("light" as const);
     return createTheme({
       ...themeOptions,
+      direction: "${dir}",
       palette: getPalette(mode),
     });
   }, [mounted, resolvedTheme]);
 
   return (
-    <AppRouterCacheProvider>
+${cache}
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <div className={theme.palette.mode}>{children}</div>
+        <div className={theme.palette.mode} dir="${dir}">
+          {children}
+        </div>
+      </ThemeProvider>
+${cacheClose}
+  );
+}
+`;
+  } else {
+    const dir = fixedRtl ? "rtl" : "ltr";
+    if (fixedRtl) {
+      body = `
+const theme = createTheme({
+  ...themeOptions,
+  direction: "rtl",
+});
+
+export function MuiProvider({ children }: { children: ReactNode }) {
+  return (
+    <AppRouterCacheProvider
+      key="mui-rtl"
+      options={{ key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] }}
+    >
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <div dir="rtl">{children}</div>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );
 }
 `;
+    } else {
+      body = `
+const theme = createTheme({
+  ...themeOptions,
+  direction: "ltr",
+});
+
+export function MuiProvider({ children }: { children: ReactNode }) {
+  return (
+    <AppRouterCacheProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </AppRouterCacheProvider>
+  );
+}
+`;
+    }
+  }
+
+  return `${imports.join("\n")}\n${body}`;
+}
 
 const RULE = `---
 description: MUI (Material UI) theme + provider conventions
@@ -79,6 +216,7 @@ alwaysApply: false
 
 - Theme modules live under \`src/theme/\` (\`theme.ts\` composes palette · typography · breakpoints · components).
 - Provider: \`MuiProvider\` in \`src/providers/mui-provider.tsx\` (Emotion App Router cache + \`ThemeProvider\` + \`CssBaseline\`).
+- Direction: follows scaffold \`direction\` (fixed or \`useDirection\` when \`both\`); RTL uses \`stylis-plugin-rtl\`.
 - Prefer MUI components over ad-hoc CSS; put shared overrides in \`theme-components.ts\`.
 - Do not add shadcn — incompatible with this styling choice.
 - Breakpoint \`xxs\` is enabled via module augmentation in \`theme.ts\`.
@@ -102,7 +240,7 @@ export const muiInstaller: Installer = {
     await fs.remove(path.join(providersDir, ".gitkeep"));
     await fs.writeFile(
       path.join(providersDir, "mui-provider.tsx"),
-      options.darkMode ? PROVIDER_DARK : PROVIDER_LIGHT,
+      muiProviderSource(options),
       "utf8",
     );
 
@@ -112,12 +250,24 @@ export const muiInstaller: Installer = {
       "utf8",
     );
 
-    await addDependencies(projectDir, {
+    const deps: Record<string, string> = {
       "@mui/material": "^6.4.0",
       "@mui/material-nextjs": "^6.4.0",
       "@emotion/react": "^11.14.0",
       "@emotion/styled": "^11.14.0",
       "@emotion/cache": "^11.14.0",
-    });
+    };
+    if (needsRtlEmotion(options)) {
+      deps.stylis = "^4.3.4";
+      deps["stylis-plugin-rtl"] = "^2.1.1";
+      await addDependencies(projectDir, deps);
+      await addDependencies(
+        projectDir,
+        { "@types/stylis": "^4.2.7" },
+        "devDependencies",
+      );
+      return;
+    }
+    await addDependencies(projectDir, deps);
   },
 };

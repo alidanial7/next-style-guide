@@ -68,6 +68,7 @@ npx create-next-style-guide@latest . --yes --preset minimal
 | `api-app` | Tailwind · shadcn:starter · dark · JWT · Query · Zustand · endpoints · Vitest · CI |
 | `marketing` | Tailwind · shadcn:minimal · dark · SEO · i18n · Vercel · Vitest · CI |
 | `dashboard` | Tailwind · shadcn:starter · dark · Query · Zustand (no endpoints) · Vitest · CI |
+| `mui-app` | MUI · dark · dir=both · Query · Zustand · Vitest · CI |
 | `custom` | Answer every prompt (default in interactive mode) |
 
 ---
@@ -95,22 +96,24 @@ my-app/
 | 📦 | Package manager: `pnpm` / `npm` / `yarn` |
 | 🎨 | Styling: `none` / `tailwind` / `mui` |
 | 🧩 | shadcn (Tailwind only): `minimal` (button) / `starter` (button · input · card · dialog) |
-| ✅ | Validation: `zod` / `yup` |
+| ✅ | Validation: `none` / `zod` / `yup` |
 | 🔑 | Auth: `none` / `jwt` / `authjs` |
 | 🗃️ | Client store: `none` / `zustand` / `redux` |
 | 🌙 | Dark mode (next-themes; Tailwind \`dark:\` or MUI palette) |
-| ✨ | Icons: `none` / `lucide` / `tabler` |
+| ↔️ | Direction: `ltr` / `rtl` / `both` (hook `useDirection` · sample toggle when both) |
+| ✨ | Icons: `none` / `lucide` / `tabler` (shadcn forces lucide unless tabler) |
 | 📡 | TanStack Query |
 | 🔌 | OpenAPI endpoints codegen |
 | 📨 | API envelope unwrap |
+| 🐳 | Docker Compose local API stub (JWT + endpoints; opt-in, on in `api-app`) |
 | 🔎 | SEO (public-routes, sitemap, robots) |
 | 🌐 | i18n (next-intl) |
 | 🧪 | Vitest (+ optional Playwright) |
-| 🧹 | ESLint / Prettier / Husky |
+| 🧹 | Enhanced ESLint / Prettier / Husky (base Next ESLint always) |
 | 🚀 | Deploy: `none` / `vercel` / `docker` |
 | 🤖 | GitHub Actions CI |
 
-Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--shadcn-set`, `--deploy`, `--dark-mode`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--icons`, … (+ `--no-*`).
+Flags: `--preset`, `--pm`, `--store`, `--styling`, `--shadcn`, `--shadcn-set`, `--direction`, `--deploy`, `--dark-mode`, `--validation`, `--auth`, `--seo`, `--i18n`, `--testing`, `--playwright`, `--api-envelope`, `--docker-compose`, `--icons`, … (+ `--no-*`).
 
 Default scaffold is a **neutral base** (no endpoints/envelope/store). Use presets for common stacks.
 

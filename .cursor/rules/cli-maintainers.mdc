@@ -1,0 +1,39 @@
+---
+description: Maintain create-next-style-guide options, installers, and generated agent rules
+alwaysApply: true
+---
+
+# CLI maintainers (next-style-guide)
+
+This repo scaffolds apps via installers under `cli/src/installers/`.
+
+## Option wiring
+
+Any new or changed scaffold option must update **all** of:
+
+1. `cli/src/types.ts` (+ `DEFAULT_OPTIONS` / `normalizeOptions`)
+2. `cli/src/prompts.ts` + `cli/src/presets.ts`
+3. CLI flags / help in `cli/src/index.ts`
+4. Installer `active` + `run` (and prune when off)
+5. Root `README.md` options table
+6. `scripts/smoke.sh` assert when behavior is non-trivial
+
+## Rule / docs bodies stay current
+
+If you change a convention or installer behavior, **edit the rule file text too**:
+
+- Template rules: `cli/template/.cursor/rules/*.mdc`, `cli/template/AGENTS.md`
+- Addon rules: `cli/addons/**/.cursor/rules/*.mdc`
+- Inline rule strings written by installers (validation, direction, docker-compose, shadcn, store, …)
+- Matching `docs/style-guide/**` the installer emits
+
+Do not leave `.mdc` / AGENTS copy describing old behavior. Feature rules ship **only** when the option is on.
+
+## Notable behaviors
+
+- **validation `none`**: plain `env.ts`, no `validation.mdc`, remove zod/yup.
+- **shadcn**: icons cannot stay `none` — normalize to `lucide` (tabler allowed).
+- **dockerCompose**: explicit opt-in; requires `auth=jwt` + `endpoints` (on in `api-app`). Not the same as `deploy=docker`.
+- **direction**: always installs `useDirection`; `both` adds provider + sample toggle; MUI + rtl/both adds stylis RTL.
+- **eslint flag**: enhanced rules only; base Next ESLint stays in the template.
+- Root `README.md` is the publish readme (`cli/prepack` copies it). Do not hand-edit `cli/README.md`.

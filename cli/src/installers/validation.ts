@@ -5,7 +5,25 @@ import {
   addDependencies,
   removeDependencies,
 } from "../helpers/package-json.js";
+import type { ValidationOption } from "../types.js";
 import type { Installer } from "./types.js";
+
+const ENV_NONE = `/**
+ * Public env helpers. Import from Client Components only for NEXT_PUBLIC_*.
+ * Server-only secrets stay out of this module until needed.
+ */
+export type PublicEnv = {
+  NEXT_PUBLIC_APP_URL: string;
+  NEXT_PUBLIC_API_URL: string;
+};
+
+export const env: PublicEnv = {
+  NEXT_PUBLIC_APP_URL:
+    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  NEXT_PUBLIC_API_URL:
+    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
+};
+`;
 
 const ENV_ZOD = `import { z } from "zod";
 
@@ -51,14 +69,16 @@ export const env: PublicEnv = publicEnvSchema.validateSync({
 });
 `;
 
-function formsRule(validation: "zod" | "yup"): string {
+function formsRule(validation: ValidationOption): string {
   const schemaLine =
     validation === "zod"
       ? "- RHF + `Controller` + Zod `zodResolver`. Schema `satisfies z.ZodType<*Body>` when endpoints codegen exists; field names = API keys."
-      : "- RHF + `Controller` + Yup `yupResolver`. Schemas in `src/lib/validations/`; field names = API keys when endpoints codegen exists.";
+      : validation === "yup"
+        ? "- RHF + `Controller` + Yup `yupResolver`. Schemas in `src/lib/validations/`; field names = API keys when endpoints codegen exists."
+        : "- RHF + `Controller`. Add a schema library later if needed; field names = API keys when endpoints codegen exists.";
 
   return `---
-description: RHF + ${validation === "zod" ? "Zod" : "Yup"} forms aligned to API body types
+description: RHF forms aligned to API body types
 globs: src/**/*form*/**,src/**/*-form*/**,src/**/*.form.tsx,src/components/forms/**,src/lib/**/*form*.ts,src/lib/validations/**
 alwaysApply: false
 ---
@@ -76,7 +96,7 @@ ${schemaLine}
 `;
 }
 
-function validationRule(validation: "zod" | "yup"): string {
+function validationRule(validation: Exclude<ValidationOption, "none">): string {
   return `---
 description: ${validation === "zod" ? "Zod" : "Yup"} validation conventions
 globs: src/lib/env.ts,src/lib/validations/**,src/**/*schema*.{ts,tsx}
@@ -96,6 +116,30 @@ export const validationInstaller: Installer = {
   id: "validation",
   active: () => true,
   async run({ projectDir, options }) {
+    await fs.writeFile(
+      path.join(projectDir, ".cursor", "rules", "forms.mdc"),
+      formsRule(options.validation),
+      "utf8",
+    );
+
+    if (options.validation === "none") {
+      await fs.writeFile(
+        path.join(projectDir, "src", "lib", "env.ts"),
+        ENV_NONE,
+        "utf8",
+      );
+      await removeDependencies(projectDir, ["zod", "yup"]);
+      await fs.outputFile(
+        path.join(projectDir, "docs", "style-guide", "validation", "none.md"),
+        `# Validation — none
+
+Env: \`src/lib/env.ts\` (plain defaults, no schema library).
+Add Zod or Yup later if forms need shared schemas.
+`,
+      );
+      return;
+    }
+
     const validationsDir = path.join(projectDir, "src", "lib", "validations");
     await fs.ensureDir(validationsDir);
     await fs.writeFile(path.join(validationsDir, ".gitkeep"), "", "utf8");
@@ -117,11 +161,6 @@ export const validationInstaller: Installer = {
       await addDependencies(projectDir, { zod: "^3.24.1" });
     }
 
-    await fs.writeFile(
-      path.join(projectDir, ".cursor", "rules", "forms.mdc"),
-      formsRule(options.validation),
-      "utf8",
-    );
     await fs.writeFile(
       path.join(projectDir, ".cursor", "rules", "validation.mdc"),
       validationRule(options.validation),

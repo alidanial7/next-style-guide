@@ -280,12 +280,6 @@ Add more: \`npx shadcn@latest add …\`
 `,
     );
 
-    if (options.icons === "none") {
-      await addDependencies(projectDir, {
-        "lucide-react": "^0.469.0",
-      });
-    }
-
     const deps: Record<string, string> = {
       "class-variance-authority": "^0.7.1",
     };

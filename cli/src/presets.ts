@@ -5,7 +5,8 @@ export type PresetId =
   | "minimal"
   | "api-app"
   | "marketing"
-  | "dashboard";
+  | "dashboard"
+  | "mui-app";
 
 type OptionSeed = Omit<ScaffoldOptions, "name" | "slug" | "noInstall">;
 
@@ -21,9 +22,11 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     icons: "none",
     validation: "zod",
     i18n: false,
+    direction: "ltr",
     darkMode: false,
     apiEnvelope: false,
     endpoints: false,
+    dockerCompose: false,
     seo: false,
     eslint: false,
     prettier: false,
@@ -44,9 +47,11 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     icons: "lucide",
     validation: "zod",
     i18n: false,
+    direction: "ltr",
     darkMode: true,
     apiEnvelope: true,
     endpoints: true,
+    dockerCompose: true,
     seo: false,
     eslint: true,
     prettier: true,
@@ -67,9 +72,11 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     icons: "lucide",
     validation: "zod",
     i18n: true,
+    direction: "ltr",
     darkMode: true,
     apiEnvelope: false,
     endpoints: false,
+    dockerCompose: false,
     seo: true,
     eslint: true,
     prettier: true,
@@ -90,9 +97,36 @@ export const PRESET_SEEDS: Record<Exclude<PresetId, "custom">, OptionSeed> = {
     icons: "lucide",
     validation: "zod",
     i18n: false,
+    direction: "ltr",
     darkMode: true,
     apiEnvelope: false,
     endpoints: false,
+    dockerCompose: false,
+    seo: false,
+    eslint: true,
+    prettier: true,
+    husky: true,
+    deploy: "none",
+    ci: true,
+    testing: true,
+    playwright: false,
+  },
+  "mui-app": {
+    packageManager: "pnpm",
+    auth: "none",
+    styling: "mui",
+    ui: "none",
+    shadcnSet: "minimal",
+    data: "tanstack-query",
+    store: "zustand",
+    icons: "lucide",
+    validation: "zod",
+    i18n: false,
+    direction: "both",
+    darkMode: true,
+    apiEnvelope: false,
+    endpoints: false,
+    dockerCompose: false,
     seo: false,
     eslint: true,
     prettier: true,
@@ -112,7 +146,9 @@ export function describePreset(id: Exclude<PresetId, "custom">): string {
     `auth=${seed.auth}`,
     seed.store !== "none" ? `store=${seed.store}` : null,
     `validation=${seed.validation}`,
+    seed.direction !== "ltr" ? `dir=${seed.direction}` : null,
     seed.endpoints ? "endpoints" : null,
+    seed.dockerCompose ? "compose" : null,
     seed.data === "tanstack-query" ? "query" : null,
     seed.darkMode ? "dark" : null,
     seed.deploy !== "none" ? `deploy=${seed.deploy}` : null,
@@ -144,6 +180,9 @@ export function collectOptionWarnings(
   if (options.ui === "shadcn" && options.styling !== "tailwind") {
     warnings.push("shadcn requires Tailwind — ui forced to none.");
   }
+  if (options.ui === "shadcn" && options.icons === "none") {
+    warnings.push("shadcn requires an icon library — icons set to lucide.");
+  }
   if (
     options.darkMode &&
     options.styling !== "tailwind" &&
@@ -154,6 +193,11 @@ export function collectOptionWarnings(
   if (options.apiEnvelope && !options.endpoints) {
     warnings.push(
       "API envelope enabled without endpoints: unwrap applies to src/lib/http.ts apiFetch.",
+    );
+  }
+  if (options.dockerCompose && !(options.auth === "jwt" && options.endpoints)) {
+    warnings.push(
+      "Docker Compose stub requires JWT + endpoints — disabled.",
     );
   }
   if (options.playwright && !options.testing) {

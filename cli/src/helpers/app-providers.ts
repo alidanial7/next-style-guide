@@ -9,7 +9,8 @@ export function needsAppProviders(options: ScaffoldOptions): boolean {
     options.store === "redux" ||
     options.styling === "mui" ||
     options.i18n ||
-    options.darkMode
+    options.darkMode ||
+    options.direction === "both"
   );
 }
 
@@ -25,6 +26,11 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
   if (options.i18n) {
     imports.push(`import { NextIntlClientProvider } from "next-intl";`);
     props.push(`messages: Record<string, unknown>`);
+  }
+  if (options.direction === "both") {
+    imports.push(
+      `import { DirectionProvider } from "@/providers/direction-provider";`,
+    );
   }
   if (options.darkMode) {
     imports.push(`import { ThemeProvider } from "@/providers/theme-provider";`);
@@ -45,6 +51,10 @@ export function generateAppProvidersSource(options: ScaffoldOptions): string {
   if (options.i18n) {
     openers.push(`    <NextIntlClientProvider messages={messages}>`);
     closers.unshift(`    </NextIntlClientProvider>`);
+  }
+  if (options.direction === "both") {
+    openers.push(`    <DirectionProvider>`);
+    closers.unshift(`    </DirectionProvider>`);
   }
   if (options.darkMode) {
     openers.push(`    <ThemeProvider>`);
@@ -108,9 +118,24 @@ export async function wireRootLayout(
   const useProviders = needsAppProviders(options);
   const dark = options.darkMode;
   const i18n = options.i18n;
+  const bothDir = options.direction === "both";
+  // Always set dir on <html> (including both → default) so SSR/portals match theme.
+  const htmlDir =
+    options.direction === "rtl"
+      ? "rtl"
+      : options.direction === "both" && options.styling === "mui"
+        ? "rtl"
+        : "ltr";
 
-  const htmlLang = i18n ? "{locale}" : `"en"`;
-  const htmlExtra = dark ? " suppressHydrationWarning" : "";
+  const htmlLang = i18n
+    ? "{locale}"
+    : htmlDir === "rtl"
+      ? `"fa"`
+      : `"en"`;
+  const htmlExtraParts: string[] = [];
+  if (dark || bothDir) htmlExtraParts.push("suppressHydrationWarning");
+  htmlExtraParts.push(`dir="${htmlDir}"`);
+  const htmlExtra = ` ${htmlExtraParts.join(" ")}`;
 
   const imports = [
     `import type { Metadata } from "next";`,
@@ -174,9 +199,6 @@ ${fnBody}
 }
 `;
 
-  // Tokens may already be replaced; if layout still has placeholder keep it —
-  // replaceTokens runs before installers, so project name is already applied.
-  // Read existing metadata title if present.
   let final = source;
   if (await fs.pathExists(layoutPath)) {
     const existing = await fs.readFile(layoutPath, "utf8");
