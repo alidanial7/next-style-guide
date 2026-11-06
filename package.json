@@ -1,6 +1,6 @@
 {
   "name": "next-style-guide",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "private": true,
   "description": "Opinionated Next.js style-guide template + create CLI",
   "license": "MIT",
