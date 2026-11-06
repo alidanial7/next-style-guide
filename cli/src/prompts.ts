@@ -126,16 +126,23 @@ async function promptCustomOptions(
 
   const icons = assertNotCancel(
     await p.select({
-      message: "Icon library?",
+      message:
+        ui === "shadcn"
+          ? "Icon library? (shadcn needs one — Lucide or Tabler)"
+          : "Icon library?",
       options:
         ui === "shadcn"
           ? [
               {
                 value: "lucide" as const,
                 label: "Lucide",
-                hint: "required default for shadcn",
+                hint: "usual shadcn default",
               },
-              { value: "tabler" as const, label: "Tabler" },
+              {
+                value: "tabler" as const,
+                label: "Tabler",
+                hint: "fine with shadcn too",
+              },
             ]
           : [
               { value: "none" as const, label: "None" },
