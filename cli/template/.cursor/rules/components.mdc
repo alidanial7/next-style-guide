@@ -1,10 +1,31 @@
 ---
-description: Folder-per-component placement, forms hierarchy, shared vs route UI
+description: Folder-per-component placement, reuse shared UI, forms hierarchy
 globs: src/app/**/*.tsx,src/components/**/*.tsx,!src/components/ui/**,!src/app/**/page.tsx,!src/app/**/layout.tsx,!src/app/**/not-found.tsx,!src/app/**/error.tsx
 alwaysApply: false
 ---
 
 # Components
+
+## Reuse before redesign (mandatory)
+
+Before writing new markup for a page/feature:
+
+1. **Search** `src/components/`, `src/components/ui/`, `src/app/_components/`, and nearby `_components/` for an existing piece that already does the job (button, field, card, table shell, dialog, empty state, page header, …).
+2. **Reuse** that component as-is when it fits.
+3. **Extend** it with optional props / variants / slots when the page needs a small difference — do **not** copy-paste and redesign a parallel version.
+4. **Extract** only when the same UI appears (or will appear) in 2+ places and no shared component exists yet — then put it in the correct placement table below.
+
+### Don't
+
+- Rebuild buttons, inputs, cards, headers, dialogs, or layout chrome from scratch on each page while a shared/UI component already exists.
+- Fork a component into `PageXFoo` / `PageYFoo` that differ only by copy, className, or one optional section — add a prop instead.
+- Hand-roll primitives that shadcn/MUI (or project wrappers) already cover.
+
+### Do
+
+- Prefer composition: page = shared building blocks + thin route glue.
+- Add props for labels, icons, density, `className`, children/slots, and optional sections.
+- If a change would break other callers, extend with a new optional prop or a focused variant — keep one source of truth.
 
 ## Folder-per-component
 
@@ -32,4 +53,4 @@ alwaysApply: false
 | shadcn primitives | `src/components/ui/*` (flat) |
 | i18n routes (when enabled) | Pages/layouts under `src/app/[locale]/…` — home samples still `src/app/_components/` |
 
-Never park single-route UI in `src/components/`. Reuse existing shared/UI primitives before new markup. Don't duplicate identical markup/handlers across pages. When i18n is on, see `.cursor/rules/i18n.mdc`.
+Never park single-route UI in `src/components/`. When i18n is on, see `.cursor/rules/i18n.mdc`.

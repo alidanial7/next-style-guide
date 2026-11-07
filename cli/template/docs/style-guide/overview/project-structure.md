@@ -38,3 +38,7 @@ __PROJECT_SLUG__/
 | Client global state | `src/stores/` |
 | Client providers | `src/providers/` |
 | i18n pages (when enabled) | `src/app/[locale]/…` — see `docs/style-guide/i18n/overview.md` |
+
+## Reuse before redesign
+
+Search existing `src/components/`, `ui/`, and `_components/` first. Reuse or extend with props — do not rebuild the same buttons/fields/cards/headers per page. Details: `.cursor/rules/components.mdc`.

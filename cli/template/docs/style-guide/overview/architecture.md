@@ -18,6 +18,7 @@ src/hooks/ · types/ · constants/
 
 1. **Routes orchestrate** — load data, compose colocated `_components`.
 2. **Colocate by usage** — one route → that route's `_components/`; two+ routes → `src/components/`.
-3. **Server first** — prefer RSC; `"use client"` only at the leaves that need interactivity.
-4. **One HTTP doorway** — `src/lib/http.ts` and/or generated `src/endpoints/*` (when enabled). Avoid ad-hoc `fetch` in UI.
-5. **Split server cache vs UI state** — When both are enabled: **TanStack Query** owns server/async cache (lists, refetch, mutations). **Zustand/Redux** owns client-only UI/session flags. Do not mirror API lists into the store.
+3. **Reuse before redesign** — use existing shared/UI components or extend them with props; do not rebuild chrome per page.
+4. **Server first** — prefer RSC; `"use client"` only at the leaves that need interactivity.
+5. **One HTTP doorway** — `src/lib/http.ts` and/or generated `src/endpoints/*` (when enabled). Avoid ad-hoc `fetch` in UI.
+6. **Split server cache vs UI state** — When both are enabled: **TanStack Query** owns server/async cache (lists, refetch, mutations). **Zustand/Redux** owns client-only UI/session flags. Do not mirror API lists into the store.

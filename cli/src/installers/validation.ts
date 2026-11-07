@@ -88,7 +88,7 @@ alwaysApply: false
 - \`"use client"\` + named exports. \`page.tsx\` stays server when metadata-only.
 - Placement: shared → \`src/components/forms/<name>/\`; one route → \`src/app/<route>/_components/forms/<name>/\`.
 ${schemaLine}
-- Reuse shared/UI controls — no ad-hoc inputs.
+- Reuse shared/UI controls — no ad-hoc inputs. Extend with props; do not redesign a parallel form control per page.
 - Required: derive from schema / \`*Body\`; use \`required\` on Field/Label (no handmade \`*\` text).
 - Invalid: \`data-invalid\`, \`aria-invalid\`, \`FieldError\`.
 - Server 400 envelope: \`getApiErrorMessage\` / \`extractApiFieldErrors\` (\`@/utils/api-error\`); map to \`setError\` when using RHF.

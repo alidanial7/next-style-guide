@@ -8,6 +8,7 @@ alwaysApply: false
 
 - App Router only. Routes orchestrate; keep `page`/`layout` thin.
 - Placement: route → `app/<route>/_components/<name>/`; home/layout → `app/_components/`; shared ≥2 routes → `components/` (`ui/` flat).
+- Reuse before redesign: existing shared/UI/`_components` first — extend with props; do not rebuild chrome per page (see `components.mdc`).
 - Folder-per-component: `<name>/index.tsx` — never `_components/foo.tsx`.
 - `lib/` = env/http/helpers; `utils/` = API client helpers; `providers/` / `hooks/` / `types/` as needed.
 - Server Components by default; `"use client"` only for interactivity.

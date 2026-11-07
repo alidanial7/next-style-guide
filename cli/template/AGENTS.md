@@ -16,6 +16,7 @@ Optional features (validation lib, Query, store, endpoints, i18n, SEO, dark mode
 ## Do
 
 - Thin `page.tsx` / `layout.tsx` — UI in folder-per-component `_components/`.
+- **Reuse before redesign**: search existing shared/UI/`_components` first; reuse or extend with props — never rebuild the same chrome per page (see `.cursor/rules/components.mdc`).
 - Route-only → `src/app/<route>/_components/<name>/index.tsx`.
 - Layout / home → `src/app/_components/<name>/`.
 - Shared (≥2 routes) → `src/components/` (`ui/` flat for shadcn).
@@ -29,6 +30,7 @@ Optional features (validation lib, Query, store, endpoints, i18n, SEO, dark mode
 
 ## Don't
 
+- Redesign page-local copies of existing buttons, fields, cards, headers, dialogs, or layout chrome — extend the shared component instead.
 - Park single-route UI in `src/components/`.
 - Flat files in `_components/` (use `<name>/index.tsx`).
 - Dump unrelated UI/state/fetch into one component file.
