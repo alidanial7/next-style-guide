@@ -65,14 +65,26 @@ function applyDomTheme(resolved: "light" | "dark") {
   root.style.colorScheme = resolved;
 }
 
+let clientSnapshot: ThemeSnapshot = SERVER_SNAPSHOT;
+
 function getClientSnapshot(): ThemeSnapshot {
   const theme = readStoredTheme();
   const systemTheme = getSystemTheme();
-  return {
-    theme,
-    systemTheme,
-    resolvedTheme: theme === "system" ? systemTheme : theme,
-  };
+  const resolvedTheme = theme === "system" ? systemTheme : theme;
+  // useSyncExternalStore requires referential stability when values are unchanged.
+  if (
+    clientSnapshot.theme === theme &&
+    clientSnapshot.systemTheme === systemTheme &&
+    clientSnapshot.resolvedTheme === resolvedTheme
+  ) {
+    return clientSnapshot;
+  }
+  clientSnapshot = { theme, systemTheme, resolvedTheme };
+  return clientSnapshot;
+}
+
+function getServerSnapshot(): ThemeSnapshot {
+  return SERVER_SNAPSHOT;
 }
 
 function subscribe(onStoreChange: () => void) {
@@ -102,7 +114,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const snapshot = useSyncExternalStore(
     subscribe,
     getClientSnapshot,
-    () => SERVER_SNAPSHOT,
+    getServerSnapshot,
   );
 
   useEffect(() => {
