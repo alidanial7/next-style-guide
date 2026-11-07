@@ -2,12 +2,12 @@
 
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState,
-  type ReactNode,
+  useSyncExternalStore,
 } from "react";
 
 export type TextDirection = "ltr" | "rtl";
@@ -23,38 +23,68 @@ type DirectionContextValue = {
 const DirectionContext = createContext<DirectionContextValue | null>(null);
 
 const STORAGE_KEY = "app-direction";
+const DIRECTION_CHANGE = "next-style-guide:direction";
 const DEFAULT_DIRECTION: TextDirection = "__DEFAULT_DIRECTION__";
 
 function readStored(): TextDirection {
   if (typeof window === "undefined") return DEFAULT_DIRECTION;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  return raw === "ltr" || raw === "rtl" ? raw : DEFAULT_DIRECTION;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw === "ltr" || raw === "rtl") return raw;
+  } catch {
+    /* ignore */
+  }
+  return DEFAULT_DIRECTION;
+}
+
+function applyDomDirection(direction: TextDirection) {
+  document.documentElement.dir = direction;
+  if (direction === "rtl") {
+    document.documentElement.lang =
+      document.documentElement.lang || "fa";
+  }
+}
+
+function subscribe(onStoreChange: () => void) {
+  function onStorage(event: StorageEvent) {
+    if (event.key === STORAGE_KEY || event.key === null) onStoreChange();
+  }
+  function onLocal() {
+    onStoreChange();
+  }
+
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(DIRECTION_CHANGE, onLocal);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(DIRECTION_CHANGE, onLocal);
+  };
 }
 
 export function DirectionProvider({ children }: { children: ReactNode }) {
-  const [direction, setDirectionState] = useState<TextDirection>(DEFAULT_DIRECTION);
-  const [mounted, setMounted] = useState(false);
+  const direction = useSyncExternalStore(
+    subscribe,
+    readStored,
+    () => DEFAULT_DIRECTION,
+  );
 
   useEffect(() => {
-    setDirectionState(readStored());
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    document.documentElement.dir = direction;
-    document.documentElement.lang =
-      direction === "rtl" ? document.documentElement.lang || "fa" : document.documentElement.lang;
-    window.localStorage.setItem(STORAGE_KEY, direction);
-  }, [direction, mounted]);
+    applyDomDirection(direction);
+  }, [direction]);
 
   const setDirection = useCallback((next: TextDirection) => {
-    setDirectionState(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      /* ignore */
+    }
+    applyDomDirection(next);
+    window.dispatchEvent(new Event(DIRECTION_CHANGE));
   }, []);
 
   const toggleDirection = useCallback(() => {
-    setDirectionState((prev) => (prev === "rtl" ? "ltr" : "rtl"));
-  }, []);
+    setDirection(direction === "rtl" ? "ltr" : "rtl");
+  }, [direction, setDirection]);
 
   const value = useMemo<DirectionContextValue>(
     () => ({

@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import { useDirection } from "@/hooks/use-direction";
 import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
+
+import { useDirection } from "@/hooks/use-direction";
 
 import themeOptions from "@/theme/theme";
 

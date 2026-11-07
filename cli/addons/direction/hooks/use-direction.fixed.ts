@@ -8,9 +8,9 @@ export type DirectionValue = {
   toggleDirection: () => void;
 };
 
-const noop = (_next?: TextDirection) => {
+function noop(_next?: TextDirection) {
   /* fixed direction — enable `direction=both` to toggle at runtime */
-};
+}
 
 /** Stable fixed direction for this scaffold (`__DIRECTION__`). */
 const FIXED: DirectionValue = {

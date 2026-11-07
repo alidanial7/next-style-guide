@@ -1,4 +1,6 @@
-/** Scaffold brand mark — plain img so it works with none / Tailwind / MUI. */
+import Image from "next/image";
+
+/** Scaffold brand mark — works with none / Tailwind / MUI. */
 export function BrandLogo({
   size = 48,
   className = "brand-logo",
@@ -7,13 +9,13 @@ export function BrandLogo({
   className?: string;
 }) {
   return (
-    <img
-      className={className}
-      src="/brand/logo.svg"
+    <Image
+      priority
       alt="next-style-guide"
-      width={size}
+      className={className}
       height={size}
-      decoding="async"
+      src="/brand/logo.svg"
+      width={size}
     />
   );
 }
